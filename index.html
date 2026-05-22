@@ -1,0 +1,1900 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SysTrack for Patrick — Controle de Saídas Não Autorizadas</title>
+  <link rel="icon" type="image/png" href="track.png" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+  <style>
+    /* ===================== RESET & BASE ===================== */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg:        #0a0e1a;
+      --bg2:       #0f1628;
+      --panel:     #131c35;
+      --panel2:    #192040;
+      --border:    #1e2d55;
+      --accent:    #1a6cff;
+      --accent2:   #0d4fd4;
+      --accent3:   #00c8ff;
+      --danger:    #ff3b5c;
+      --warning:   #ffb800;
+      --success:   #00e676;
+      --text:      #e8eaf6;
+      --text2:     #8892b0;
+      --text3:     #4a5578;
+      --radius:    10px;
+      --shadow:    0 4px 32px rgba(0,0,0,0.5);
+    }
+    html { scroll-behavior: smooth; }
+    body {
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* ===================== SCROLLBAR ===================== */
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: var(--bg); }
+    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+    /* ===================== TOPBAR ===================== */
+    .topbar {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+      height: 60px;
+      background: rgba(10,14,26,0.92);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0 28px;
+    }
+    .topbar-brand {
+      display: flex; align-items: center; gap: 12px;
+    }
+    .topbar-brand .logo-icon {
+      width: 36px; height: 36px;
+      background: linear-gradient(135deg, var(--accent), var(--accent3));
+      border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 18px;
+    }
+    .topbar-brand h1 {
+      font-size: 1.15rem; font-weight: 700; letter-spacing: 1px;
+      background: linear-gradient(90deg, #fff, var(--accent3));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    }
+    .topbar-brand span {
+      font-size: 0.7rem; color: var(--text2); letter-spacing: 2px; text-transform: uppercase;
+      display: block; margin-top: -4px;
+    }
+    .topbar-right {
+      display: flex; align-items: center; gap: 16px;
+    }
+    .topbar-right .badge {
+      background: var(--panel2); border: 1px solid var(--border);
+      border-radius: 20px; padding: 4px 14px;
+      font-size: 0.78rem; color: var(--text2);
+    }
+    .topbar-right .badge span { color: var(--accent3); font-weight: 600; }
+
+    /* ===================== SIDEBAR ===================== */
+    .sidebar {
+      position: fixed; top: 60px; left: 0; bottom: 0; width: 220px;
+      background: var(--bg2);
+      border-right: 1px solid var(--border);
+      padding: 24px 0;
+      display: flex; flex-direction: column; gap: 4px;
+      z-index: 90;
+    }
+    .sidebar-section {
+      padding: 8px 20px 4px;
+      font-size: 0.65rem; letter-spacing: 2px; text-transform: uppercase;
+      color: var(--text3); font-weight: 600;
+    }
+    .nav-item {
+      display: flex; align-items: center; gap: 12px;
+      padding: 10px 20px;
+      cursor: pointer;
+      border-left: 3px solid transparent;
+      transition: all 0.2s;
+      font-size: 0.88rem; color: var(--text2);
+    }
+    .nav-item:hover { background: var(--panel); color: var(--text); }
+    .nav-item.active {
+      background: rgba(26,108,255,0.12);
+      border-left-color: var(--accent);
+      color: var(--accent3);
+    }
+    .nav-item .icon { font-size: 1rem; width: 20px; text-align: center; }
+
+    /* ===================== MAIN ===================== */
+    .main {
+      margin-left: 220px;
+      margin-top: 60px;
+      padding: 32px 36px;
+      min-height: calc(100vh - 60px);
+    }
+
+    /* ===================== PAGES ===================== */
+    .page { display: none; }
+    .page.active { display: block; }
+
+    /* ===================== PAGE HEADER ===================== */
+    .page-header {
+      margin-bottom: 28px;
+    }
+    .page-header h2 {
+      font-size: 1.5rem; font-weight: 700;
+      background: linear-gradient(90deg, #fff 60%, var(--accent3));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    }
+    .page-header p { color: var(--text2); font-size: 0.88rem; margin-top: 4px; }
+
+    /* ===================== CARDS ===================== */
+    .card {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 24px;
+      box-shadow: var(--shadow);
+    }
+    .card-title {
+      font-size: 0.85rem; font-weight: 600; letter-spacing: 1px;
+      text-transform: uppercase; color: var(--accent3);
+      margin-bottom: 20px;
+      display: flex; align-items: center; gap: 8px;
+    }
+    .card-title::after {
+      content: ''; flex: 1; height: 1px;
+      background: linear-gradient(90deg, var(--border), transparent);
+    }
+
+    /* ===================== STATS ===================== */
+    .stats-grid {
+      display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px;
+      margin-bottom: 28px;
+    }
+    .stat-card {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 20px;
+      position: relative; overflow: hidden;
+    }
+    .stat-card::before {
+      content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
+    }
+    .stat-card.blue::before { background: linear-gradient(90deg, var(--accent), var(--accent3)); }
+    .stat-card.red::before { background: linear-gradient(90deg, var(--danger), #ff8a80); }
+    .stat-card.yellow::before { background: linear-gradient(90deg, var(--warning), #ffe082); }
+    .stat-card.green::before { background: linear-gradient(90deg, var(--success), #69f0ae); }
+    .stat-label { font-size: 0.75rem; color: var(--text2); text-transform: uppercase; letter-spacing: 1px; }
+    .stat-value { font-size: 2rem; font-weight: 700; margin: 6px 0 2px; }
+    .stat-card.blue .stat-value { color: var(--accent3); }
+    .stat-card.red .stat-value { color: var(--danger); }
+    .stat-card.yellow .stat-value { color: var(--warning); }
+    .stat-card.green .stat-value { color: var(--success); }
+    .stat-sub { font-size: 0.75rem; color: var(--text3); }
+
+    /* ===================== GRID LAYOUTS ===================== */
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+    .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; }
+
+    /* ===================== FORMS ===================== */
+    .form-group { margin-bottom: 18px; }
+    .form-row { display: grid; gap: 16px; margin-bottom: 18px; }
+    .form-row.cols-2 { grid-template-columns: 1fr 1fr; }
+    .form-row.cols-3 { grid-template-columns: 1fr 1fr 1fr; }
+    .form-row.cols-4 { grid-template-columns: 1fr 1fr 1fr 1fr; }
+    label {
+      display: block; font-size: 0.78rem; font-weight: 600;
+      color: var(--text2); margin-bottom: 6px; letter-spacing: 0.5px;
+      text-transform: uppercase;
+    }
+    label .req { color: var(--danger); margin-left: 2px; }
+    input, select, textarea {
+      width: 100%;
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 10px 14px;
+      color: var(--text);
+      font-size: 0.9rem;
+      font-family: inherit;
+      transition: border-color 0.2s, box-shadow 0.2s;
+      outline: none;
+    }
+    input:focus, select:focus, textarea:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(26,108,255,0.15);
+    }
+    input::placeholder, textarea::placeholder { color: var(--text3); }
+    select option { background: var(--panel); }
+    textarea { resize: vertical; min-height: 90px; }
+
+    /* ===================== BUTTONS ===================== */
+    .btn {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 10px 22px; border-radius: 8px;
+      font-size: 0.88rem; font-weight: 600; cursor: pointer;
+      border: none; transition: all 0.2s; letter-spacing: 0.3px;
+      font-family: inherit;
+    }
+    .btn-primary {
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      color: #fff;
+      box-shadow: 0 4px 16px rgba(26,108,255,0.35);
+    }
+    .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(26,108,255,0.5); }
+    .btn-danger {
+      background: linear-gradient(135deg, var(--danger), #c62828);
+      color: #fff;
+      box-shadow: 0 4px 16px rgba(255,59,92,0.3);
+    }
+    .btn-danger:hover { transform: translateY(-1px); }
+    .btn-success {
+      background: linear-gradient(135deg, #00c853, #00a040);
+      color: #fff;
+      box-shadow: 0 4px 16px rgba(0,200,83,0.3);
+    }
+    .btn-success:hover { transform: translateY(-1px); }
+    .btn-outline {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--text2);
+    }
+    .btn-outline:hover { border-color: var(--accent); color: var(--accent3); background: rgba(26,108,255,0.08); }
+    .btn-warning {
+      background: linear-gradient(135deg, var(--warning), #e65100);
+      color: #000;
+      box-shadow: 0 4px 16px rgba(255,184,0,0.3);
+    }
+    .btn-sm { padding: 6px 14px; font-size: 0.8rem; }
+    .btn-icon { padding: 8px; border-radius: 6px; }
+    .btn-group { display: flex; gap: 10px; flex-wrap: wrap; }
+
+    /* ===================== TABLE ===================== */
+    .table-wrap { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; font-size: 0.87rem; }
+    thead tr { border-bottom: 1px solid var(--border); }
+    th {
+      padding: 10px 14px; text-align: left;
+      font-size: 0.72rem; text-transform: uppercase; letter-spacing: 1px;
+      color: var(--text3); font-weight: 600;
+    }
+    td { padding: 12px 14px; border-bottom: 1px solid rgba(30,45,85,0.5); color: var(--text2); }
+    tbody tr:hover { background: rgba(26,108,255,0.05); }
+    tbody tr:last-child td { border-bottom: none; }
+
+    /* ===================== BADGES ===================== */
+    .badge-status {
+      display: inline-flex; align-items: center; gap: 5px;
+      padding: 3px 10px; border-radius: 20px;
+      font-size: 0.72rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;
+    }
+    .badge-status::before { content: ''; width: 6px; height: 6px; border-radius: 50%; }
+    .badge-status.danger { background: rgba(255,59,92,0.15); color: var(--danger); border: 1px solid rgba(255,59,92,0.3); }
+    .badge-status.danger::before { background: var(--danger); }
+    .badge-status.warning { background: rgba(255,184,0,0.15); color: var(--warning); border: 1px solid rgba(255,184,0,0.3); }
+    .badge-status.warning::before { background: var(--warning); }
+    .badge-status.success { background: rgba(0,230,118,0.15); color: var(--success); border: 1px solid rgba(0,230,118,0.3); }
+    .badge-status.success::before { background: var(--success); }
+    .badge-status.info { background: rgba(0,200,255,0.15); color: var(--accent3); border: 1px solid rgba(0,200,255,0.3); }
+    .badge-status.info::before { background: var(--accent3); }
+
+    /* ===================== UPLOAD AREA ===================== */
+    .upload-area {
+      border: 2px dashed var(--border);
+      border-radius: var(--radius);
+      padding: 32px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.2s;
+      background: var(--bg2);
+    }
+    .upload-area:hover, .upload-area.drag-over {
+      border-color: var(--accent);
+      background: rgba(26,108,255,0.06);
+    }
+    .upload-area .upload-icon { font-size: 2.5rem; margin-bottom: 10px; }
+    .upload-area p { color: var(--text2); font-size: 0.88rem; }
+    .upload-area span { color: var(--accent3); font-weight: 600; }
+    .upload-area small { color: var(--text3); font-size: 0.78rem; display: block; margin-top: 4px; }
+
+    .images-preview {
+      display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 10px;
+      margin-top: 14px;
+    }
+    .img-thumb {
+      position: relative; border-radius: 8px; overflow: hidden;
+      aspect-ratio: 1; border: 1px solid var(--border);
+    }
+    .img-thumb img { width: 100%; height: 100%; object-fit: cover; }
+    .img-thumb .remove-img {
+      position: absolute; top: 4px; right: 4px;
+      background: rgba(255,59,92,0.85); color: #fff;
+      border: none; border-radius: 50%; width: 22px; height: 22px;
+      cursor: pointer; font-size: 0.7rem; display: flex; align-items: center; justify-content: center;
+    }
+    .img-thumb .img-label {
+      position: absolute; bottom: 0; left: 0; right: 0;
+      background: rgba(0,0,0,0.65); color: #fff;
+      font-size: 0.65rem; padding: 3px 6px; text-align: center;
+    }
+
+    /* ===================== PARADAS SECTION ===================== */
+    .parada-item {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 18px;
+      margin-bottom: 12px;
+      position: relative;
+    }
+    .parada-item .parada-num {
+      position: absolute; top: -10px; left: 16px;
+      background: var(--accent); color: #fff;
+      font-size: 0.7rem; font-weight: 700; padding: 2px 10px;
+      border-radius: 10px; letter-spacing: 1px;
+    }
+    .parada-remove {
+      position: absolute; top: 12px; right: 12px;
+      background: transparent; border: 1px solid var(--border);
+      color: var(--danger); border-radius: 6px;
+      padding: 4px 10px; font-size: 0.75rem; cursor: pointer;
+      transition: all 0.2s;
+    }
+    .parada-remove:hover { background: rgba(255,59,92,0.1); border-color: var(--danger); }
+
+    /* ===================== MODAL ===================== */
+    .modal-overlay {
+      position: fixed; inset: 0; z-index: 200;
+      background: rgba(0,0,0,0.75);
+      backdrop-filter: blur(4px);
+      display: flex; align-items: center; justify-content: center;
+      opacity: 0; pointer-events: none; transition: opacity 0.25s;
+    }
+    .modal-overlay.open { opacity: 1; pointer-events: all; }
+    .modal {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 32px;
+      width: 90%; max-width: 680px;
+      max-height: 90vh; overflow-y: auto;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.6);
+      transform: translateY(20px); transition: transform 0.25s;
+    }
+    .modal-overlay.open .modal { transform: translateY(0); }
+    .modal-header {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 24px;
+    }
+    .modal-header h3 { font-size: 1.1rem; font-weight: 700; }
+    .modal-close {
+      background: transparent; border: 1px solid var(--border);
+      color: var(--text2); border-radius: 6px;
+      width: 32px; height: 32px; cursor: pointer; font-size: 1rem;
+      display: flex; align-items: center; justify-content: center;
+      transition: all 0.2s;
+    }
+    .modal-close:hover { border-color: var(--danger); color: var(--danger); }
+
+    /* ===================== ALERT ===================== */
+    .alert {
+      padding: 12px 18px; border-radius: 8px;
+      font-size: 0.88rem; margin-bottom: 16px;
+      display: flex; align-items: center; gap: 10px;
+    }
+    .alert-success { background: rgba(0,230,118,0.1); border: 1px solid rgba(0,230,118,0.3); color: var(--success); }
+    .alert-danger { background: rgba(255,59,92,0.1); border: 1px solid rgba(255,59,92,0.3); color: var(--danger); }
+    .alert-info { background: rgba(0,200,255,0.1); border: 1px solid rgba(0,200,255,0.3); color: var(--accent3); }
+
+    /* ===================== EMPTY STATE ===================== */
+    .empty-state {
+      text-align: center; padding: 60px 20px;
+      color: var(--text3);
+    }
+    .empty-state .empty-icon { font-size: 3rem; margin-bottom: 12px; opacity: 0.4; }
+    .empty-state p { font-size: 0.9rem; }
+
+    /* ===================== VIATURA CARD ===================== */
+    .viatura-grid {
+      display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 16px;
+    }
+    .viatura-card {
+      background: var(--panel2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 20px;
+      position: relative;
+      transition: all 0.2s;
+    }
+    .viatura-card:hover { border-color: var(--accent); transform: translateY(-2px); }
+    .viatura-card .placa {
+      font-size: 1.3rem; font-weight: 800; letter-spacing: 3px;
+      color: var(--accent3); font-family: monospace;
+    }
+    .viatura-card .modelo { font-size: 0.85rem; color: var(--text2); margin-top: 4px; }
+    .viatura-card .motorista { font-size: 0.8rem; color: var(--text3); margin-top: 2px; }
+    .viatura-card .viatura-actions {
+      display: flex; gap: 8px; margin-top: 14px;
+    }
+    .viatura-card .ocorrencias-count {
+      position: absolute; top: 14px; right: 14px;
+      background: rgba(255,59,92,0.15); color: var(--danger);
+      border: 1px solid rgba(255,59,92,0.3);
+      border-radius: 20px; padding: 2px 10px;
+      font-size: 0.72rem; font-weight: 700;
+    }
+
+    /* ===================== TIMELINE ===================== */
+    .timeline { position: relative; padding-left: 28px; }
+    .timeline::before {
+      content: ''; position: absolute; left: 8px; top: 0; bottom: 0;
+      width: 2px; background: linear-gradient(180deg, var(--accent), transparent);
+    }
+    .timeline-item { position: relative; margin-bottom: 20px; }
+    .timeline-item::before {
+      content: ''; position: absolute; left: -24px; top: 4px;
+      width: 10px; height: 10px; border-radius: 50%;
+      background: var(--accent); border: 2px solid var(--bg2);
+    }
+    .timeline-item .tl-time { font-size: 0.75rem; color: var(--accent3); font-weight: 600; margin-bottom: 2px; }
+    .timeline-item .tl-title { font-size: 0.88rem; font-weight: 600; color: var(--text); }
+    .timeline-item .tl-desc { font-size: 0.8rem; color: var(--text2); margin-top: 2px; }
+
+    /* ===================== SEARCH BAR ===================== */
+    .search-bar {
+      position: relative; margin-bottom: 20px;
+    }
+    .search-bar input {
+      padding-left: 40px;
+    }
+    .search-bar .search-icon {
+      position: absolute; left: 14px; top: 50%; transform: translateY(-50%);
+      color: var(--text3); font-size: 0.9rem; pointer-events: none;
+    }
+
+    /* ===================== DIVIDER ===================== */
+    .divider {
+      height: 1px; background: var(--border);
+      margin: 24px 0;
+    }
+
+    /* ===================== GLOW EFFECT ===================== */
+    .glow { box-shadow: 0 0 20px rgba(26,108,255,0.2); }
+
+    /* ===================== RESPONSIVE ===================== */
+    @media (max-width: 900px) {
+      .sidebar { display: none; }
+      .main { margin-left: 0; padding: 20px; }
+      .stats-grid { grid-template-columns: 1fr 1fr; }
+      .grid-2, .grid-3 { grid-template-columns: 1fr; }
+      .form-row.cols-3, .form-row.cols-4 { grid-template-columns: 1fr 1fr; }
+    }
+    @media (max-width: 600px) {
+      .stats-grid { grid-template-columns: 1fr; }
+      .form-row.cols-2, .form-row.cols-3, .form-row.cols-4 { grid-template-columns: 1fr; }
+    }
+
+    /* ===================== SCAN LINE ANIMATION ===================== */
+    @keyframes scanline {
+      0% { top: -100%; }
+      100% { top: 100%; }
+    }
+    .scan-container {
+      position: relative; overflow: hidden;
+    }
+    .scan-container::after {
+      content: '';
+      position: absolute; left: 0; right: 0; height: 2px;
+      background: linear-gradient(90deg, transparent, rgba(0,200,255,0.3), transparent);
+      animation: scanline 4s linear infinite;
+      pointer-events: none;
+    }
+
+    /* ===================== PULSE ANIMATION ===================== */
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+    .pulse { animation: pulse 2s ease-in-out infinite; }
+
+    /* ===================== TOOLTIP ===================== */
+    [data-tip] { position: relative; cursor: help; }
+    [data-tip]::after {
+      content: attr(data-tip);
+      position: absolute; bottom: 120%; left: 50%; transform: translateX(-50%);
+      background: var(--panel2); color: var(--text);
+      border: 1px solid var(--border); border-radius: 6px;
+      padding: 6px 10px; font-size: 0.75rem; white-space: nowrap;
+      opacity: 0; pointer-events: none; transition: opacity 0.2s;
+      z-index: 999;
+    }
+    [data-tip]:hover::after { opacity: 1; }
+
+    /* ===================== PRINT HIDDEN ===================== */
+    @media print { .topbar, .sidebar, .btn, .modal-overlay { display: none !important; } }
+  </style>
+</head>
+<body>
+
+<!-- TOPBAR -->
+<header class="topbar">
+  <div class="topbar-brand">
+    <div class="logo-icon">🛰️</div>
+    <div>
+      <h1>SysTrack for Patrick</h1>
+      <span>Controle de Frotas & Ocorrências</span>
+    </div>
+  </div>
+  <div class="topbar-right">
+    <div class="badge">Viaturas: <span id="badge-viaturas">0</span></div>
+    <div class="badge">Ocorrências: <span id="badge-ocorrencias">0</span></div>
+    <div class="badge" style="color: var(--success);">● Sistema Ativo</div>
+  </div>
+</header>
+
+<!-- SIDEBAR -->
+<nav class="sidebar">
+  <div class="sidebar-section">Navegação</div>
+  <div class="nav-item active" onclick="showPage('dashboard')" id="nav-dashboard">
+    <span class="icon">📊</span> Dashboard
+  </div>
+  <div class="nav-item" onclick="showPage('viaturas')" id="nav-viaturas">
+    <span class="icon">🚗</span> Viaturas
+  </div>
+  <div class="nav-item" onclick="showPage('ocorrencias')" id="nav-ocorrencias">
+    <span class="icon">🔍</span> Ocorrências
+  </div>
+  <div class="nav-item" onclick="showPage('nova-ocorrencia')" id="nav-nova-ocorrencia">
+    <span class="icon">➕</span> Nova Ocorrência
+  </div>
+  <div class="sidebar-section" style="margin-top:12px;">Relatórios</div>
+  <div class="nav-item" onclick="showPage('laudos')" id="nav-laudos">
+    <span class="icon">📄</span> Laudos / PDF
+  </div>
+</nav>
+
+<!-- MAIN -->
+<main class="main">
+
+  <!-- ========== DASHBOARD ========== -->
+  <div class="page active" id="page-dashboard">
+    <div class="page-header">
+      <h2>📊 Dashboard</h2>
+      <p>Visão geral do sistema de controle de frotas e ocorrências</p>
+    </div>
+
+    <div class="stats-grid">
+      <div class="stat-card blue">
+        <div class="stat-label">Viaturas Cadastradas</div>
+        <div class="stat-value" id="stat-viaturas">0</div>
+        <div class="stat-sub">Total no sistema</div>
+      </div>
+      <div class="stat-card red">
+        <div class="stat-label">Ocorrências Registradas</div>
+        <div class="stat-value" id="stat-ocorrencias">0</div>
+        <div class="stat-sub">Total investigado</div>
+      </div>
+      <div class="stat-card yellow">
+        <div class="stat-label">Saídas Não Autorizadas</div>
+        <div class="stat-value" id="stat-saidas">0</div>
+        <div class="stat-sub">Confirmadas</div>
+      </div>
+      <div class="stat-card green">
+        <div class="stat-label">Desvios de Rota</div>
+        <div class="stat-value" id="stat-desvios">0</div>
+        <div class="stat-sub">Identificados</div>
+      </div>
+    </div>
+
+    <div class="grid-2">
+      <div class="card scan-container">
+        <div class="card-title">⚡ Últimas Ocorrências</div>
+        <div id="dash-ultimas">
+          <div class="empty-state">
+            <div class="empty-icon">🔍</div>
+            <p>Nenhuma ocorrência registrada ainda.</p>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">🚗 Viaturas com Mais Ocorrências</div>
+        <div id="dash-ranking">
+          <div class="empty-state">
+            <div class="empty-icon">🚗</div>
+            <p>Nenhuma viatura cadastrada ainda.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========== VIATURAS ========== -->
+  <div class="page" id="page-viaturas">
+    <div class="page-header">
+      <h2>🚗 Viaturas</h2>
+      <p>Gerencie as viaturas monitoradas pelo sistema</p>
+    </div>
+    <div style="display:flex; justify-content:flex-end; margin-bottom:20px;">
+      <button class="btn btn-primary" onclick="openModalViatura()">➕ Cadastrar Viatura</button>
+    </div>
+    <div class="viatura-grid" id="viatura-grid">
+      <div class="empty-state" style="grid-column:1/-1;">
+        <div class="empty-icon">🚗</div>
+        <p>Nenhuma viatura cadastrada. Clique em "Cadastrar Viatura" para começar.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========== OCORRÊNCIAS ========== -->
+  <div class="page" id="page-ocorrencias">
+    <div class="page-header">
+      <h2>🔍 Ocorrências Registradas</h2>
+      <p>Histórico completo de saídas não autorizadas e desvios de rota</p>
+    </div>
+    <div class="search-bar">
+      <span class="search-icon">🔎</span>
+      <input type="text" id="search-ocorrencias" placeholder="Buscar por placa, motorista, endereço..." oninput="filtrarOcorrencias()" />
+    </div>
+    <div class="card">
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Nº</th>
+              <th>Data</th>
+              <th>Placa</th>
+              <th>Motorista</th>
+              <th>Tipo</th>
+              <th>Saída</th>
+              <th>Retorno</th>
+              <th>Imagens</th>
+              <th>Ações</th>
+            </tr>
+          </thead>
+          <tbody id="ocorrencias-tbody">
+            <tr>
+              <td colspan="9">
+                <div class="empty-state">
+                  <div class="empty-icon">📋</div>
+                  <p>Nenhuma ocorrência registrada.</p>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========== NOVA OCORRÊNCIA ========== -->
+  <div class="page" id="page-nova-ocorrencia">
+    <div class="page-header">
+      <h2>➕ Registrar Nova Ocorrência</h2>
+      <p>Preencha os dados da investigação de saída não autorizada ou desvio de rota</p>
+    </div>
+
+    <div id="alert-form"></div>
+
+    <form id="form-ocorrencia" onsubmit="salvarOcorrencia(event)">
+
+      <!-- BLOCO 1: IDENTIFICAÇÃO -->
+      <div class="card" style="margin-bottom:20px;">
+        <div class="card-title">🚗 Identificação da Viatura</div>
+        <div class="form-row cols-3">
+          <div class="form-group">
+            <label>Placa da Viatura <span class="req">*</span></label>
+            <select id="f-placa" required onchange="preencherMotorista()">
+              <option value="">Selecione a viatura...</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Motorista / Condutor</label>
+            <input type="text" id="f-motorista" placeholder="Nome do motorista" />
+          </div>
+          <div class="form-group">
+            <label>Data da Ocorrência <span class="req">*</span></label>
+            <input type="date" id="f-data" required />
+          </div>
+        </div>
+        <div class="form-row cols-2">
+          <div class="form-group">
+            <label>Tipo de Ocorrência <span class="req">*</span></label>
+            <select id="f-tipo" required>
+              <option value="">Selecione...</option>
+              <option value="Saída Não Autorizada">Saída Não Autorizada</option>
+              <option value="Desvio de Rota">Desvio de Rota</option>
+              <option value="Saída Não Autorizada + Desvio de Rota">Saída Não Autorizada + Desvio de Rota</option>
+              <option value="Parada Suspeita">Parada Suspeita</option>
+              <option value="Retorno Atrasado">Retorno Atrasado</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Número do Protocolo / Referência</label>
+            <input type="text" id="f-protocolo" placeholder="Ex: OC-2024-001" />
+          </div>
+        </div>
+      </div>
+
+      <!-- BLOCO 2: HORÁRIOS E MOVIMENTAÇÃO -->
+      <div class="card" style="margin-bottom:20px;">
+        <div class="card-title">⏱️ Horários e Movimentação</div>
+        <div class="form-row cols-3">
+          <div class="form-group">
+            <label>Horário de Saída <span class="req">*</span></label>
+            <input type="time" id="f-hora-saida" required />
+          </div>
+          <div class="form-group">
+            <label>Horário de Retorno à Base <span class="req">*</span></label>
+            <input type="time" id="f-hora-retorno" required />
+          </div>
+          <div class="form-group">
+            <label>Tempo Total Fora da Base</label>
+            <input type="text" id="f-tempo-total" placeholder="Ex: 2h 35min" />
+          </div>
+        </div>
+        <div class="form-row cols-3">
+          <div class="form-group">
+            <label>KM Rodado (Rastreador)</label>
+            <input type="number" id="f-km-rodado" placeholder="Ex: 47" step="0.1" />
+          </div>
+          <div class="form-group">
+            <label>KM da Rota Padrão</label>
+            <input type="number" id="f-km-padrao" placeholder="Ex: 22" step="0.1" />
+          </div>
+          <div class="form-group">
+            <label>Diferença de KM (a mais)</label>
+            <input type="number" id="f-km-diferenca" placeholder="Calculado automaticamente" step="0.1" readonly style="opacity:0.7;" />
+          </div>
+        </div>
+      </div>
+
+      <!-- BLOCO 3: PARADAS -->
+      <div class="card" style="margin-bottom:20px;">
+        <div class="card-title">📍 Parada Principal Identificada</div>
+        <div class="form-row cols-3" style="margin-bottom:16px;">
+          <div class="form-group">
+            <label>Horário de Chegada</label>
+            <input type="time" id="p0-chegada" />
+          </div>
+          <div class="form-group">
+            <label>Tempo Parado</label>
+            <input type="text" id="p0-tempo" placeholder="Ex: 45min" />
+          </div>
+          <div class="form-group">
+            <label>Horário de Saída da Parada</label>
+            <input type="time" id="p0-saida" />
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Endereço / Localização</label>
+          <input type="text" id="p0-endereco" placeholder="Rua, número, bairro, cidade..." />
+        </div>
+        <div class="form-group">
+          <label>Referência do Local (suposto estabelecimento/local)</label>
+          <input type="text" id="p0-referencia" placeholder="Ex: Bar do João, Residência particular, Posto de gasolina..." />
+        </div>
+        <div style="border-top: 1px solid var(--border); padding-top: 16px; margin-top: 16px;">
+          <div class="card-title" style="margin-bottom: 16px; font-size: 0.95rem;">📍 Paradas Adicionais</div>
+          <div id="paradas-container"></div>
+          <button type="button" class="btn btn-outline" onclick="adicionarParada()">
+            ➕ Adicionar Parada Extra
+          </button>
+        </div>
+      </div>
+
+      <!-- BLOCO 4: OBSERVAÇÕES -->
+      <div class="card" style="margin-bottom:20px;">
+        <div class="card-title">📝 Observações e Contexto</div>
+        <div class="form-group">
+          <label>Serviços Passados ao Prestador (no período)</label>
+          <textarea id="f-servicos" placeholder="Descreva os serviços que foram designados ao motorista neste período conforme o sistema..."></textarea>
+        </div>
+        <div class="form-group">
+          <label>Observações da Investigação</label>
+          <textarea id="f-observacoes" placeholder="Descreva os detalhes da investigação, cruzamento de dados do rastreador, inconsistências encontradas..."></textarea>
+        </div>
+        <div class="form-row cols-2">
+          <div class="form-group">
+            <label>Investigador Responsável</label>
+            <input type="text" id="f-investigador" placeholder="Nome do responsável pela investigação" />
+          </div>
+          <div class="form-group">
+            <label>Situação da Ocorrência</label>
+            <select id="f-status">
+              <option value="Em Análise">Em Análise</option>
+              <option value="Confirmada">Confirmada</option>
+              <option value="Arquivada">Arquivada</option>
+              <option value="Encaminhada para RH">Encaminhada para RH</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- BLOCO 5: EVIDÊNCIAS -->
+      <div class="card" style="margin-bottom:20px;">
+        <div class="card-title">📸 Evidências Fotográficas</div>
+        <div class="upload-area" id="upload-area" onclick="document.getElementById('file-input').click()"
+          ondragover="dragOver(event)" ondragleave="dragLeave(event)" ondrop="dropFiles(event)">
+          <div class="upload-icon">📁</div>
+          <p>Clique para selecionar ou <span>arraste as imagens aqui</span></p>
+          <small>PNG, JPG, JPEG, WEBP — Múltiplos arquivos permitidos</small>
+        </div>
+        <input type="file" id="file-input" multiple accept="image/*" style="display:none" onchange="handleFiles(event)" />
+        <div class="images-preview" id="images-preview"></div>
+      </div>
+
+      <!-- AÇÕES -->
+      <div class="btn-group" style="justify-content:flex-end;">
+        <button type="button" class="btn btn-outline" onclick="limparFormulario()">🗑️ Limpar</button>
+        <button type="submit" class="btn btn-primary">💾 Salvar Ocorrência</button>
+      </div>
+
+    </form>
+  </div>
+
+  <!-- ========== LAUDOS ========== -->
+  <div class="page" id="page-laudos">
+    <div class="page-header">
+      <h2>📄 Geração de Laudos em PDF</h2>
+      <p>Gere laudos técnicos detalhados das ocorrências registradas</p>
+    </div>
+
+    <div class="grid-2" style="margin-bottom:24px;">
+      <div class="card">
+        <div class="card-title">⚙️ Configurações do Laudo</div>
+        <div class="form-group">
+          <label>Empresa / Organização</label>
+          <input type="text" id="pdf-empresa" placeholder="Nome da empresa ou órgão" />
+        </div>
+        <div class="form-group">
+          <label>Departamento Responsável</label>
+          <input type="text" id="pdf-depto" placeholder="Ex: Departamento de Logística e Controle" />
+        </div>
+        <div class="form-group">
+          <label>Responsável pela Emissão</label>
+          <input type="text" id="pdf-responsavel" placeholder="Nome do responsável" />
+        </div>
+        <div class="form-group">
+          <label>Observação Final do Laudo</label>
+          <textarea id="pdf-obs-final" placeholder="Texto de encerramento ou conclusão do laudo..."></textarea>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">📋 Selecionar Ocorrência</div>
+        <div class="form-group">
+          <label>Ocorrência para o Laudo</label>
+          <select id="pdf-ocorrencia">
+            <option value="">Selecione uma ocorrência...</option>
+          </select>
+        </div>
+        <div id="pdf-preview-info" style="margin-top:16px;"></div>
+        <div style="margin-top:20px;">
+          <button class="btn btn-success" style="width:100%;" onclick="gerarPDF()">
+            📥 Gerar e Baixar Laudo PDF
+          </button>
+        </div>
+        <div style="margin-top:10px;">
+          <button class="btn btn-outline" style="width:100%;" onclick="gerarPDFTodos()">
+            📦 Gerar Laudo Consolidado (Todas)
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</main>
+
+<!-- MODAL VIATURA -->
+<div class="modal-overlay" id="modal-viatura">
+  <div class="modal">
+    <div class="modal-header">
+      <h3>🚗 Cadastrar Viatura</h3>
+      <button class="modal-close" onclick="closeModal('modal-viatura')">✕</button>
+    </div>
+    <form onsubmit="salvarViatura(event)">
+      <div class="form-row cols-2">
+        <div class="form-group">
+          <label>Placa <span class="req">*</span></label>
+          <input type="text" id="v-placa" placeholder="ABC-1234" required maxlength="10" style="text-transform:uppercase;" />
+        </div>
+        <div class="form-group">
+          <label>Modelo / Marca <span class="req">*</span></label>
+          <input type="text" id="v-modelo" placeholder="Ex: Fiat Strada 2022" required />
+        </div>
+      </div>
+      <div class="form-row cols-2">
+        <div class="form-group">
+          <label>Motorista Responsável</label>
+          <input type="text" id="v-motorista" placeholder="Nome do motorista" />
+        </div>
+        <div class="form-group">
+          <label>Setor / Departamento</label>
+          <input type="text" id="v-setor" placeholder="Ex: Manutenção" />
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Observações</label>
+        <textarea id="v-obs" placeholder="Informações adicionais sobre a viatura..."></textarea>
+      </div>
+      <div class="btn-group" style="justify-content:flex-end; margin-top:8px;">
+        <button type="button" class="btn btn-outline" onclick="closeModal('modal-viatura')">Cancelar</button>
+        <button type="submit" class="btn btn-primary">💾 Salvar Viatura</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- MODAL DETALHE OCORRÊNCIA -->
+<div class="modal-overlay" id="modal-detalhe">
+  <div class="modal" style="max-width:780px;">
+    <div class="modal-header">
+      <h3 id="modal-detalhe-title">Detalhes da Ocorrência</h3>
+      <button class="modal-close" onclick="closeModal('modal-detalhe')">✕</button>
+    </div>
+    <div id="modal-detalhe-content"></div>
+  </div>
+</div>
+
+<script>
+// =====================================================
+// ESTADO GLOBAL
+// =====================================================
+let viaturas = JSON.parse(localStorage.getItem('st_viaturas') || '[]');
+let ocorrencias = JSON.parse(localStorage.getItem('st_ocorrencias') || '[]');
+let imagensAtuais = []; // {name, dataUrl}
+let paradaCount = 0;
+
+// =====================================================
+// NAVEGAÇÃO
+// =====================================================
+function showPage(id) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('page-' + id).classList.add('active');
+  document.getElementById('nav-' + id).classList.add('active');
+  if (id === 'nova-ocorrencia') prepararFormOcorrencia();
+  if (id === 'laudos') prepararLaudos();
+  if (id === 'ocorrencias') renderOcorrencias();
+  if (id === 'viaturas') renderViaturas();
+  if (id === 'dashboard') renderDashboard();
+}
+
+// =====================================================
+// PERSISTÊNCIA
+// =====================================================
+function salvarStorage() {
+  try {
+    // Remove imagens pesadas antes de salvar
+    const ocorrenciasLeves = ocorrencias.map(o => ({
+      ...o,
+      imagens: (o.imagens || []).map(img => ({
+        name: img.name
+      }))
+    }));
+
+    localStorage.setItem('st_viaturas', JSON.stringify(viaturas));
+    localStorage.setItem('st_ocorrencias', JSON.stringify(ocorrenciasLeves));
+
+    atualizarBadges();
+
+  } catch (e) {
+    console.error('Erro ao salvar:', e);
+
+    alert(
+      'Erro ao salvar ocorrência. O armazenamento do navegador está cheio.'
+    );
+  }
+}
+
+// =====================================================
+// MODAIS
+// =====================================================
+function openModalViatura() {
+  document.getElementById('v-placa').value = '';
+  document.getElementById('v-modelo').value = '';
+  document.getElementById('v-motorista').value = '';
+  document.getElementById('v-setor').value = '';
+  document.getElementById('v-obs').value = '';
+  document.getElementById('modal-viatura').classList.add('open');
+}
+function closeModal(id) {
+  document.getElementById(id).classList.remove('open');
+}
+
+// =====================================================
+// VIATURAS
+// =====================================================
+function salvarViatura(e) {
+  e.preventDefault();
+  const placa = document.getElementById('v-placa').value.toUpperCase().trim();
+  if (viaturas.find(v => v.placa === placa)) {
+    alert('Já existe uma viatura com esta placa!');
+    return;
+  }
+  viaturas.push({
+    id: Date.now(),
+    placa,
+    modelo: document.getElementById('v-modelo').value,
+    motorista: document.getElementById('v-motorista').value,
+    setor: document.getElementById('v-setor').value,
+    obs: document.getElementById('v-obs').value,
+    cadastro: new Date().toLocaleDateString('pt-BR')
+  });
+  salvarStorage();
+  closeModal('modal-viatura');
+  renderViaturas();
+  showAlert('alert-form', 'success', '✅ Viatura cadastrada com sucesso!');
+}
+
+function renderViaturas() {
+  const grid = document.getElementById('viatura-grid');
+  if (!viaturas.length) {
+    grid.innerHTML = `<div class="empty-state" style="grid-column:1/-1;">
+      <div class="empty-icon">🚗</div>
+      <p>Nenhuma viatura cadastrada. Clique em "Cadastrar Viatura" para começar.</p>
+    </div>`;
+    return;
+  }
+  grid.innerHTML = viaturas.map(v => {
+    const count = ocorrencias.filter(o => o.placa === v.placa).length;
+    return `<div class="viatura-card">
+      ${count > 0 ? `<div class="ocorrencias-count">${count} ocorr.</div>` : ''}
+      <div class="placa">${v.placa}</div>
+      <div class="modelo">${v.modelo}</div>
+      <div class="motorista">👤 ${v.motorista || 'Sem motorista'} ${v.setor ? '· ' + v.setor : ''}</div>
+      <div class="viatura-actions">
+        <button class="btn btn-outline btn-sm" onclick="showPage('nova-ocorrencia'); setTimeout(()=>{ document.getElementById('f-placa').value='${v.placa}'; preencherMotorista(); }, 100)">➕ Ocorrência</button>
+        <button class="btn btn-danger btn-sm" onclick="excluirViatura(${v.id})">🗑️</button>
+      </div>
+    </div>`;
+  }).join('');
+  document.getElementById('stat-viaturas').textContent = viaturas.length;
+}
+
+function excluirViatura(id) {
+  if (!confirm('Deseja excluir esta viatura? As ocorrências relacionadas serão mantidas.')) return;
+  viaturas = viaturas.filter(v => v.id !== id);
+  salvarStorage();
+  renderViaturas();
+}
+
+// =====================================================
+// PARADAS
+// =====================================================
+function adicionarParada() {
+  paradaCount++;
+  const n = paradaCount;
+  const div = document.createElement('div');
+  div.className = 'parada-item';
+  div.id = `parada-${n}`;
+  div.innerHTML = `
+    <div class="parada-num">PARADA ${n}</div>
+    <button type="button" class="parada-remove" onclick="removerParada(${n})">✕ Remover</button>
+    <div class="form-row cols-3" style="margin-top:12px;">
+      <div class="form-group">
+        <label>Horário de Chegada</label>
+        <input type="time" id="p${n}-chegada" />
+      </div>
+      <div class="form-group">
+        <label>Tempo Parado</label>
+        <input type="text" id="p${n}-tempo" placeholder="Ex: 45min" />
+      </div>
+      <div class="form-group">
+        <label>Horário de Saída da Parada</label>
+        <input type="time" id="p${n}-saida" />
+      </div>
+    </div>
+    <div class="form-group">
+      <label>Endereço / Localização</label>
+      <input type="text" id="p${n}-endereco" placeholder="Rua, número, bairro, cidade..." />
+    </div>
+    <div class="form-group">
+      <label>Referência do Local (suposto estabelecimento/local)</label>
+      <input type="text" id="p${n}-referencia" placeholder="Ex: Bar do João, Residência particular, Posto de gasolina..." />
+    </div>
+  `;
+  document.getElementById('paradas-container').appendChild(div);
+}
+
+function removerParada(n) {
+  const el = document.getElementById(`parada-${n}`);
+  if (el) el.remove();
+}
+
+function coletarParadas() {
+  const paradas = [];
+  
+  // Coletar parada principal (p0)
+  const p0Endereco = document.getElementById('p0-endereco')?.value || '';
+  if (p0Endereco) {
+    paradas.push({
+      chegada: document.getElementById('p0-chegada')?.value || '',
+      tempo: document.getElementById('p0-tempo')?.value || '',
+      saida: document.getElementById('p0-saida')?.value || '',
+      endereco: p0Endereco,
+      referencia: document.getElementById('p0-referencia')?.value || '',
+    });
+  }
+  
+  // Coletar paradas adicionais
+  document.querySelectorAll('.parada-item').forEach(item => {
+    const n = item.id.replace('parada-', '');
+    paradas.push({
+      chegada: document.getElementById(`p${n}-chegada`)?.value || '',
+      tempo: document.getElementById(`p${n}-tempo`)?.value || '',
+      saida: document.getElementById(`p${n}-saida`)?.value || '',
+      endereco: document.getElementById(`p${n}-endereco`)?.value || '',
+      referencia: document.getElementById(`p${n}-referencia`)?.value || '',
+    });
+  });
+  return paradas;
+}
+
+// =====================================================
+// UPLOAD DE IMAGENS
+// =====================================================
+function handleFiles(event) {
+  const files = Array.from(event.target.files);
+  files.forEach(file => adicionarImagem(file));
+  event.target.value = '';
+}
+
+function adicionarImagem(file) {
+  if (!file.type.startsWith('image/')) return;
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    imagensAtuais.push({ name: file.name, dataUrl: e.target.result });
+    renderImagensPreview();
+  };
+  reader.readAsDataURL(file);
+}
+
+function renderImagensPreview() {
+  const container = document.getElementById('images-preview');
+  container.innerHTML = imagensAtuais.map((img, i) => `
+    <div class="img-thumb">
+      <img src="${img.dataUrl}" alt="${img.name}" />
+      <button class="remove-img" onclick="removerImagem(${i})">✕</button>
+      <div class="img-label">${img.name.length > 14 ? img.name.substring(0,11)+'...' : img.name}</div>
+    </div>
+  `).join('');
+}
+
+function removerImagem(i) {
+  imagensAtuais.splice(i, 1);
+  renderImagensPreview();
+}
+
+function dragOver(e) {
+  e.preventDefault();
+  document.getElementById('upload-area').classList.add('drag-over');
+}
+function dragLeave(e) {
+  document.getElementById('upload-area').classList.remove('drag-over');
+}
+function dropFiles(e) {
+  e.preventDefault();
+  document.getElementById('upload-area').classList.remove('drag-over');
+  Array.from(e.dataTransfer.files).forEach(f => adicionarImagem(f));
+}
+
+// =====================================================
+// OCORRÊNCIAS
+// =====================================================
+function prepararFormOcorrencia() {
+  const sel = document.getElementById('f-placa');
+  const atual = sel.value;
+  sel.innerHTML = '<option value="">Selecione a viatura...</option>';
+  viaturas.forEach(v => {
+    const opt = document.createElement('option');
+    opt.value = v.placa;
+    opt.textContent = `${v.placa} — ${v.modelo}`;
+    sel.appendChild(opt);
+  });
+  if (atual) sel.value = atual;
+
+  // Calcular diferença de KM automaticamente
+  document.getElementById('f-km-rodado').addEventListener('input', calcularKmDiff);
+  document.getElementById('f-km-padrao').addEventListener('input', calcularKmDiff);
+
+  // Data padrão = hoje
+  if (!document.getElementById('f-data').value) {
+    document.getElementById('f-data').value = new Date().toISOString().split('T')[0];
+  }
+}
+
+function calcularKmDiff() {
+  const rodado = parseFloat(document.getElementById('f-km-rodado').value) || 0;
+  const padrao = parseFloat(document.getElementById('f-km-padrao').value) || 0;
+  const diff = rodado - padrao;
+  document.getElementById('f-km-diferenca').value = diff > 0 ? diff.toFixed(1) : '';
+}
+
+function preencherMotorista() {
+  const placa = document.getElementById('f-placa').value;
+  const v = viaturas.find(v => v.placa === placa);
+  if (v) document.getElementById('f-motorista').value = v.motorista || '';
+}
+
+function salvarOcorrencia(e) {
+  e.preventDefault();
+  const placa = document.getElementById('f-placa').value;
+  if (!placa) { showAlert('alert-form', 'danger', '⚠️ Selecione uma viatura!'); return; }
+
+  const ocorrencia = {
+    id: Date.now(),
+    numero: 'OC-' + String(ocorrencias.length + 1).padStart(4, '0'),
+    protocolo: document.getElementById('f-protocolo').value || ('OC-' + String(ocorrencias.length + 1).padStart(4, '0')),
+    placa,
+    motorista: document.getElementById('f-motorista').value,
+    data: document.getElementById('f-data').value,
+    tipo: document.getElementById('f-tipo').value,
+    horaSaida: document.getElementById('f-hora-saida').value,
+    horaRetorno: document.getElementById('f-hora-retorno').value,
+    tempoTotal: document.getElementById('f-tempo-total').value,
+    kmRodado: document.getElementById('f-km-rodado').value,
+    kmPadrao: document.getElementById('f-km-padrao').value,
+    kmDiferenca: document.getElementById('f-km-diferenca').value,
+    paradas: coletarParadas(),
+    servicos: document.getElementById('f-servicos').value,
+    observacoes: document.getElementById('f-observacoes').value,
+    investigador: document.getElementById('f-investigador').value,
+    status: document.getElementById('f-status').value,
+    imagens: imagensAtuais.map(i => ({ name: i.name, dataUrl: i.dataUrl })),
+    criadoEm: new Date().toLocaleString('pt-BR')
+  };
+
+  ocorrencias.push(ocorrencia);
+  salvarStorage();
+  showAlert('alert-form', 'success', `✅ Ocorrência ${ocorrencia.protocolo} registrada com sucesso!`);
+  limparFormulario();
+  renderDashboard();
+}
+
+function limparFormulario() {
+  document.getElementById('form-ocorrencia').reset();
+  document.getElementById('paradas-container').innerHTML = '';
+  paradaCount = 0;
+  imagensAtuais = [];
+  renderImagensPreview();
+  document.getElementById('f-data').value = new Date().toISOString().split('T')[0];
+  // Limpar campos da parada principal
+  document.getElementById('p0-chegada').value = '';
+  document.getElementById('p0-tempo').value = '';
+  document.getElementById('p0-saida').value = '';
+  document.getElementById('p0-endereco').value = '';
+  document.getElementById('p0-referencia').value = '';
+}
+
+function renderOcorrencias(filtro = '') {
+  const tbody = document.getElementById('ocorrencias-tbody');
+  let lista = ocorrencias;
+  if (filtro) {
+    const f = filtro.toLowerCase();
+    lista = ocorrencias.filter(o =>
+      o.placa?.toLowerCase().includes(f) ||
+      o.motorista?.toLowerCase().includes(f) ||
+      o.tipo?.toLowerCase().includes(f) ||
+      o.protocolo?.toLowerCase().includes(f) ||
+      o.paradas?.some(p => p.endereco?.toLowerCase().includes(f) || p.referencia?.toLowerCase().includes(f))
+    );
+  }
+  if (!lista.length) {
+    tbody.innerHTML = `<tr><td colspan="9"><div class="empty-state"><div class="empty-icon">📋</div><p>Nenhuma ocorrência encontrada.</p></div></td></tr>`;
+    return;
+  }
+  tbody.innerHTML = lista.slice().reverse().map(o => {
+    const statusClass = { 'Confirmada': 'danger', 'Em Análise': 'warning', 'Arquivada': 'info', 'Encaminhada para RH': 'success' }[o.status] || 'info';
+    return `<tr>
+      <td><strong style="color:var(--accent3)">${o.protocolo}</strong></td>
+      <td>${formatarData(o.data)}</td>
+      <td><span style="font-family:monospace;font-weight:700;color:var(--accent3)">${o.placa}</span></td>
+      <td>${o.motorista || '—'}</td>
+      <td><span class="badge-status ${o.tipo?.includes('Saída') ? 'danger' : 'warning'}">${o.tipo}</span></td>
+      <td>${o.horaSaida || '—'}</td>
+      <td>${o.horaRetorno || '—'}</td>
+      <td>${o.imagens?.length ? `<span class="badge-status info">📸 ${o.imagens.length}</span>` : '—'}</td>
+      <td>
+        <div style="display:flex;gap:6px;">
+          <button class="btn btn-outline btn-sm btn-icon" onclick="verDetalhe(${o.id})" data-tip="Ver detalhes">👁️</button>
+          <button class="btn btn-success btn-sm btn-icon" onclick="gerarPDFOcorrencia(${o.id})" data-tip="Gerar PDF">📄</button>
+          <button class="btn btn-danger btn-sm btn-icon" onclick="excluirOcorrencia(${o.id})" data-tip="Excluir">🗑️</button>
+        </div>
+      </td>
+    </tr>`;
+  }).join('');
+  document.getElementById('stat-ocorrencias').textContent = ocorrencias.length;
+}
+
+function filtrarOcorrencias() {
+  renderOcorrencias(document.getElementById('search-ocorrencias').value);
+}
+
+function excluirOcorrencia(id) {
+  if (!confirm('Deseja excluir esta ocorrência? Esta ação não pode ser desfeita.')) return;
+  ocorrencias = ocorrencias.filter(o => o.id !== id);
+  salvarStorage();
+  renderOcorrencias();
+  renderDashboard();
+}
+
+function verDetalhe(id) {
+  const o = ocorrencias.find(x => x.id === id);
+  if (!o) return;
+  document.getElementById('modal-detalhe-title').textContent = `Ocorrência ${o.protocolo} — ${o.placa}`;
+  const statusClass = { 'Confirmada': 'danger', 'Em Análise': 'warning', 'Arquivada': 'info', 'Encaminhada para RH': 'success' }[o.status] || 'info';
+
+  let paradasHtml = '';
+  if (o.paradas?.length) {
+    paradasHtml = `<div class="timeline" style="margin-top:8px;">` +
+      o.paradas.map((p, i) => `
+        <div class="timeline-item">
+          <div class="tl-time">${p.chegada || '?'} → ${p.saida || '?'} (${p.tempo || '?'})</div>
+          <div class="tl-title">📍 Parada ${i + 1}: ${p.referencia || 'Local não identificado'}</div>
+          <div class="tl-desc">${p.endereco || '—'}</div>
+        </div>
+      `).join('') + `</div>`;
+  } else {
+    paradasHtml = '<p style="color:var(--text3);font-size:0.85rem;">Nenhuma parada registrada.</p>';
+  }
+
+  let imgHtml = '';
+  if (o.imagens?.length) {
+    imgHtml = `<div class="images-preview">` +
+      o.imagens.map(img => `<div class="img-thumb"><img src="${img.dataUrl}" alt="${img.name}" /><div class="img-label">${img.name}</div></div>`).join('') +
+      `</div>`;
+  }
+
+  document.getElementById('modal-detalhe-content').innerHTML = `
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px;">
+      <div><small style="color:var(--text3)">DATA</small><div style="font-weight:600;">${formatarData(o.data)}</div></div>
+      <div><small style="color:var(--text3)">TIPO</small><div><span class="badge-status ${o.tipo?.includes('Saída') ? 'danger' : 'warning'}">${o.tipo}</span></div></div>
+      <div><small style="color:var(--text3)">MOTORISTA</small><div style="font-weight:600;">${o.motorista || '—'}</div></div>
+      <div><small style="color:var(--text3)">STATUS</small><div><span class="badge-status ${statusClass}">${o.status}</span></div></div>
+      <div><small style="color:var(--text3)">SAÍDA</small><div style="font-weight:600;">${o.horaSaida || '—'}</div></div>
+      <div><small style="color:var(--text3)">RETORNO</small><div style="font-weight:600;">${o.horaRetorno || '—'}</div></div>
+      <div><small style="color:var(--text3)">TEMPO FORA</small><div style="font-weight:600;">${o.tempoTotal || '—'}</div></div>
+      <div><small style="color:var(--text3)">KM A MAIS</small><div style="font-weight:600;color:var(--danger)">${o.kmDiferenca ? o.kmDiferenca + ' km' : '—'}</div></div>
+    </div>
+    <div class="divider"></div>
+    <div style="margin-bottom:12px;"><strong style="color:var(--accent3)">📍 Paradas Identificadas</strong>${paradasHtml}</div>
+    ${o.servicos ? `<div class="divider"></div><div><strong style="color:var(--accent3)">📋 Serviços no Período</strong><p style="color:var(--text2);font-size:0.87rem;margin-top:6px;">${o.servicos}</p></div>` : ''}
+    ${o.observacoes ? `<div class="divider"></div><div><strong style="color:var(--accent3)">📝 Observações</strong><p style="color:var(--text2);font-size:0.87rem;margin-top:6px;">${o.observacoes}</p></div>` : ''}
+    ${o.imagens?.length ? `<div class="divider"></div><div><strong style="color:var(--accent3)">📸 Evidências (${o.imagens.length})</strong>${imgHtml}</div>` : ''}
+    <div class="divider"></div>
+    <div style="display:flex;justify-content:flex-end;gap:10px;">
+      <button class="btn btn-success" onclick="gerarPDFOcorrencia(${o.id}); closeModal('modal-detalhe')">📄 Gerar Laudo PDF</button>
+    </div>
+  `;
+  document.getElementById('modal-detalhe').classList.add('open');
+}
+
+// =====================================================
+// DASHBOARD
+// =====================================================
+function renderDashboard() {
+  document.getElementById('stat-viaturas').textContent = viaturas.length;
+  document.getElementById('stat-ocorrencias').textContent = ocorrencias.length;
+  document.getElementById('stat-saidas').textContent = ocorrencias.filter(o => o.tipo?.includes('Saída')).length;
+  document.getElementById('stat-desvios').textContent = ocorrencias.filter(o => o.tipo?.includes('Desvio')).length;
+
+  // Últimas ocorrências
+  const ultimas = ocorrencias.slice(-5).reverse();
+  const dashUltimas = document.getElementById('dash-ultimas');
+  if (!ultimas.length) {
+    dashUltimas.innerHTML = `<div class="empty-state"><div class="empty-icon">🔍</div><p>Nenhuma ocorrência registrada ainda.</p></div>`;
+  } else {
+    dashUltimas.innerHTML = `<div class="timeline">` +
+      ultimas.map(o => `
+        <div class="timeline-item">
+          <div class="tl-time">${formatarData(o.data)} — ${o.horaSaida || '?'}</div>
+          <div class="tl-title">${o.protocolo} · <span style="font-family:monospace;color:var(--accent3)">${o.placa}</span></div>
+          <div class="tl-desc">${o.tipo} · ${o.motorista || 'Motorista não informado'}</div>
+        </div>
+      `).join('') + `</div>`;
+  }
+
+  // Ranking viaturas
+  const ranking = document.getElementById('dash-ranking');
+  if (!viaturas.length) {
+    ranking.innerHTML = `<div class="empty-state"><div class="empty-icon">🚗</div><p>Nenhuma viatura cadastrada ainda.</p></div>`;
+  } else {
+    const sorted = viaturas.map(v => ({
+      ...v,
+      count: ocorrencias.filter(o => o.placa === v.placa).length
+    })).sort((a, b) => b.count - a.count);
+    ranking.innerHTML = `<table><thead><tr><th>Placa</th><th>Modelo</th><th>Motorista</th><th>Ocorrências</th></tr></thead><tbody>` +
+      sorted.map(v => `<tr>
+        <td><span style="font-family:monospace;font-weight:700;color:var(--accent3)">${v.placa}</span></td>
+        <td>${v.modelo}</td>
+        <td>${v.motorista || '—'}</td>
+        <td><span class="badge-status ${v.count > 0 ? 'danger' : 'success'}">${v.count}</span></td>
+      </tr>`).join('') + `</tbody></table>`;
+  }
+}
+
+// =====================================================
+// LAUDOS / PDF
+// =====================================================
+function prepararLaudos() {
+  const sel = document.getElementById('pdf-ocorrencia');
+  sel.innerHTML = '<option value="">Selecione uma ocorrência...</option>';
+  ocorrencias.slice().reverse().forEach(o => {
+    const opt = document.createElement('option');
+    opt.value = o.id;
+    opt.textContent = `${o.protocolo} — ${o.placa} — ${formatarData(o.data)}`;
+    sel.appendChild(opt);
+  });
+  sel.onchange = () => {
+    const id = parseInt(sel.value);
+    const o = ocorrencias.find(x => x.id === id);
+    const info = document.getElementById('pdf-preview-info');
+    if (o) {
+      info.innerHTML = `
+        <div style="background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:14px;">
+          <div style="font-size:0.8rem;color:var(--text3);margin-bottom:8px;">PRÉVIA DO LAUDO</div>
+          <div style="font-size:0.9rem;"><strong>${o.protocolo}</strong> · ${o.tipo}</div>
+          <div style="font-size:0.82rem;color:var(--text2);margin-top:4px;">
+            Placa: ${o.placa} · Motorista: ${o.motorista || '—'}<br>
+            Data: ${formatarData(o.data)} · Saída: ${o.horaSaida || '—'} · Retorno: ${o.horaRetorno || '—'}<br>
+            Paradas: ${o.paradas?.length || 0} · Imagens: ${o.imagens?.length || 0}
+          </div>
+        </div>`;
+    } else {
+      info.innerHTML = '';
+    }
+  };
+}
+
+function gerarPDFOcorrencia(id) {
+  const o = ocorrencias.find(x => x.id === id);
+  if (!o) return;
+  const empresa = document.getElementById('pdf-empresa')?.value || '';
+  const depto = document.getElementById('pdf-depto')?.value || '';
+  const responsavel = document.getElementById('pdf-responsavel')?.value || '';
+  const obsFinal = document.getElementById('pdf-obs-final')?.value || '';
+  gerarPDFComDados([o], empresa, depto, responsavel, obsFinal);
+}
+
+function gerarPDF() {
+  const id = parseInt(document.getElementById('pdf-ocorrencia').value);
+  if (!id) { alert('Selecione uma ocorrência!'); return; }
+  const o = ocorrencias.find(x => x.id === id);
+  if (!o) return;
+  const empresa = document.getElementById('pdf-empresa').value;
+  const depto = document.getElementById('pdf-depto').value;
+  const responsavel = document.getElementById('pdf-responsavel').value;
+  const obsFinal = document.getElementById('pdf-obs-final').value;
+  gerarPDFComDados([o], empresa, depto, responsavel, obsFinal);
+}
+
+function gerarPDFTodos() {
+  if (!ocorrencias.length) { alert('Nenhuma ocorrência registrada!'); return; }
+  const empresa = document.getElementById('pdf-empresa').value;
+  const depto = document.getElementById('pdf-depto').value;
+  const responsavel = document.getElementById('pdf-responsavel').value;
+  const obsFinal = document.getElementById('pdf-obs-final').value;
+  gerarPDFComDados(ocorrencias, empresa, depto, responsavel, obsFinal);
+}
+
+function gerarPDFComDados(lista, empresa, depto, responsavel, obsFinal) {
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+  const W = 210, H = 297;
+  const margin = 12;
+  let y = 0;
+
+  // Cores - Paleta Formal/Jurídica
+  const C = {
+    white:      [255, 255, 255],
+    black:      [0, 0, 0],
+    darkgray:   [40, 40, 40],
+    medgray:    [80, 80, 80],
+    lightgray:  [200, 200, 200],
+    verylight:  [245, 245, 245],
+    accent:     [20, 60, 120],
+    danger:     [180, 30, 30],
+  };
+
+  function addPage() {
+    doc.addPage();
+    y = 0;
+    drawPageBg();
+    drawPageHeader();
+    y = 22;
+  }
+
+  function drawPageBg() {
+    doc.setFillColor(...C.white);
+    doc.rect(0, 0, W, H, 'F');
+  }
+
+  function drawPageHeader() {
+    doc.setFillColor(...C.darkgray);
+    doc.rect(0, 0, W, 8, 'F');
+    doc.setFillColor(...C.accent);
+    doc.rect(0, 8, W, 1, 'F');
+  }
+
+  function checkY(needed = 20) {
+    if (y + needed > H - 18) addPage();
+  }
+
+  function sectionTitle(text) {
+    checkY(12);
+    doc.setFillColor(...C.verylight);
+    doc.rect(margin, y, W - margin * 2, 8, 'F');
+    doc.setFillColor(...C.accent);
+    doc.rect(margin, y, 2, 8, 'F');
+    doc.setDrawColor(...C.lightgray);
+    doc.setLineWidth(0.3);
+    doc.line(margin, y + 8, W - margin, y + 8);
+    doc.setFontSize(9);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(...C.darkgray);
+    doc.text(text.toUpperCase(), margin + 5, y + 5.5);
+    y += 8;
+  }
+
+  function field(label, value, x, fw, color) {
+    doc.setFontSize(6);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(...C.accent);
+    doc.text(label.toUpperCase(), x, y + 2.2);
+    doc.setFontSize(8);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(...(color || C.black));
+    const lines = doc.splitTextToSize(value || '—', fw - 4);
+    doc.text(lines, x, y + 5.8);
+    return lines.length * 4 + 2;
+  }
+
+  // ---- CAPA / CABEÇALHO ----
+  lista.forEach((o, idx) => {
+    if (idx === 0) {
+      drawPageBg();
+      drawPageHeader();
+      
+      doc.setFontSize(7);
+      doc.setFont('helvetica', 'bold');
+      doc.setTextColor(...C.darkgray);
+      doc.text('SYSTRACK FOR PATRICK — SISTEMA DE CONTROLE DE FROTAS', margin, 14);
+      if (empresa) {
+        doc.setFontSize(6);
+        doc.setTextColor(...C.medgray);
+        doc.text(empresa.toUpperCase(), W - margin, 14, { align: 'right' });
+      }
+
+      y = 26;
+
+      doc.setFillColor(...C.accent);
+      doc.rect(margin, y, W - margin * 2, 1, 'F');
+      doc.setFontSize(16);
+      doc.setFont('helvetica', 'bold');
+      doc.setTextColor(...C.darkgray);
+      doc.text('LAUDO DE INVESTIGAÇÃO', W / 2, y + 12, { align: 'center' });
+      doc.setFontSize(10);
+      doc.setTextColor(...C.medgray);
+      doc.text('Saída Não Autorizada / Desvio de Rota de Motorista', W / 2, y + 20, { align: 'center' });
+      
+      y += 28;
+
+      if (empresa || depto || responsavel) {
+        doc.setFillColor(...C.verylight);
+        doc.rect(margin, y, W - margin * 2, 16, 'F');
+        doc.setDrawColor(...C.lightgray);
+        doc.setLineWidth(0.3);
+        doc.rect(margin, y, W - margin * 2, 16, 'S');
+        
+        const cols = [
+          ['Organização', empresa || '—'],
+          ['Departamento', depto || '—'],
+          ['Responsável', responsavel || '—'],
+          ['Emissão', new Date().toLocaleDateString('pt-BR')],
+        ];
+        const cw = (W - margin * 2) / cols.length;
+        cols.forEach((c, i) => {
+          doc.setFontSize(6);
+          doc.setFont('helvetica', 'bold');
+          doc.setTextColor(...C.medgray);
+          doc.text(c[0].toUpperCase(), margin + i * cw + 3, y + 4);
+          doc.setFontSize(8);
+          doc.setFont('helvetica', 'normal');
+          doc.setTextColor(...C.black);
+          const lines = doc.splitTextToSize(c[1], cw - 6);
+          doc.text(lines, margin + i * cw + 3, y + 9);
+        });
+        y += 16;
+      }
+    } else {
+      addPage();
+    }
+
+    // IDENTIFICAÇÃO DA OCORRÊNCIA
+    sectionTitle(`Ocorrência ${o.protocolo} — ${o.tipo}`);
+
+    const bw = (W - margin * 2 - 8) / 3;
+    const statusColor = { 'Confirmada': C.danger, 'Em Análise': C.medgray, 'Arquivada': C.lightgray, 'Encaminhada para RH': [0, 100, 50] }[o.status] || C.accent;
+    checkY(12);
+    doc.setFillColor(...C.verylight);
+    doc.rect(margin, y, bw, 10, 'F');
+    doc.setDrawColor(...C.lightgray);
+    doc.setLineWidth(0.3);
+    doc.rect(margin, y, bw, 10, 'S');
+    field('Protocolo', o.protocolo, margin + 3, bw, C.accent);
+    
+    doc.setFillColor(...C.verylight);
+    doc.rect(margin + bw + 4, y, bw, 10, 'F');
+    doc.rect(margin + bw + 4, y, bw, 10, 'S');
+    field('Data', formatarData(o.data), margin + bw + 7, bw);
+    
+    doc.setFillColor(...C.verylight);
+    doc.rect(margin + (bw + 4) * 2, y, bw, 10, 'F');
+    doc.rect(margin + (bw + 4) * 2, y, bw, 10, 'S');
+    field('Status', o.status, margin + (bw + 4) * 2 + 3, bw, statusColor);
+    y += 10;
+
+    checkY(12);
+    doc.setFillColor(...C.verylight);
+    doc.rect(margin, y, bw, 9, 'F');
+    doc.rect(margin, y, bw, 9, 'S');
+    field('Placa', o.placa, margin + 3, bw, C.accent);
+    
+    doc.setFillColor(...C.verylight);
+    doc.rect(margin + bw + 4, y, bw, 10, 'F');
+    doc.rect(margin + bw + 4, y, bw, 10, 'S');
+    field('Motorista', o.motorista || '—', margin + bw + 7, bw);
+    
+    doc.setFillColor(...C.verylight);
+    doc.rect(margin + (bw + 4) * 2, y, bw, 10, 'F');
+    doc.rect(margin + (bw + 4) * 2, y, bw, 10, 'S');
+    field('Tipo', o.tipo, margin + (bw + 4) * 2 + 3, bw, C.danger);
+    y += 10;
+
+    // HORÁRIOS
+    sectionTitle('Horários e Movimentação');
+    const hw = (W - margin * 2 - 12) / 4;
+    checkY(12);
+    [
+      ['Saída', o.horaSaida || '—'],
+      ['Retorno', o.horaRetorno || '—'],
+      ['Tempo Fora', o.tempoTotal || '—'],
+      ['Investigador', o.investigador || '—'],
+    ].forEach((item, i) => {
+      doc.setFillColor(...C.verylight);
+      doc.rect(margin + i * (hw + 4), y, hw, 9, 'F');
+      doc.rect(margin + i * (hw + 4), y, hw, 9, 'S');
+      field(item[0], item[1], margin + i * (hw + 4) + 3, hw);
+    });
+    y += 10;
+
+    // KM
+    if (o.kmRodado || o.kmPadrao || o.kmDiferenca) {
+      checkY(12);
+      const kw = (W - margin * 2 - 8) / 3;
+      [
+        ['KM Rodado', o.kmRodado ? o.kmRodado + ' km' : '—'],
+        ['KM Padrão', o.kmPadrao ? o.kmPadrao + ' km' : '—'],
+        ['Diferença', o.kmDiferenca ? o.kmDiferenca + ' km' : '—'],
+      ].forEach((item, i) => {
+        doc.setFillColor(...C.verylight);
+        doc.rect(margin + i * (kw + 4), y, kw, 9, 'F');
+        doc.rect(margin + i * (kw + 4), y, kw, 9, 'S');
+        field(item[0], item[1], margin + i * (kw + 4) + 3, kw, i === 2 ? C.danger : C.black);
+      });
+      y += 10;
+    }
+
+    // PARADAS
+    if (o.paradas?.length) {
+      sectionTitle(`Paradas Identificadas (${o.paradas.length})`);
+      o.paradas.forEach((p, i) => {
+        checkY(20);
+        doc.setFillColor(...C.verylight);
+        doc.rect(margin, y, W - margin * 2, 18, 'F');
+        doc.setDrawColor(...C.lightgray);
+        doc.setLineWidth(0.3);
+        doc.rect(margin, y, W - margin * 2, 18, 'S');
+        
+        doc.setFontSize(8);
+        doc.setFont('helvetica', 'bold');
+        doc.setTextColor(...C.darkgray);
+        doc.text(`Parada ${i + 1}`, margin + 3, y + 4);
+        
+        const pw = (W - margin * 2 - 30) / 3;
+        doc.setFontSize(6);
+        doc.setTextColor(...C.medgray);
+        doc.text('Chegada:', margin + 25, y + 3);
+        doc.setFontSize(8);
+        doc.setTextColor(...C.black);
+        doc.text(p.chegada || '—', margin + 25, y + 7);
+        
+        doc.setFontSize(6);
+        doc.setTextColor(...C.medgray);
+        doc.text('Tempo:', margin + 25 + pw + 5, y + 3);
+        doc.setFontSize(8);
+        doc.setTextColor(...C.black);
+        doc.text(p.tempo || '—', margin + 25 + pw + 5, y + 7);
+        
+        doc.setFontSize(6);
+        doc.setTextColor(...C.medgray);
+        doc.text('Saída:', margin + 25 + (pw + 5) * 2, y + 3);
+        doc.setFontSize(8);
+        doc.setTextColor(...C.black);
+        doc.text(p.saida || '—', margin + 25 + (pw + 5) * 2, y + 7);
+        
+        doc.setFontSize(6);
+        doc.setFont('helvetica', 'bold');
+        doc.setTextColor(...C.medgray);
+        doc.text('Endereço:', margin + 3, y + 11);
+        doc.setFontSize(7.5);
+        doc.setFont('helvetica', 'normal');
+        doc.setTextColor(...C.black);
+        const endLines = doc.splitTextToSize((p.endereco || '—') + (p.referencia ? ' · ' + p.referencia : ''), W - margin * 2 - 6);
+        doc.text(endLines, margin + 3, y + 15);
+        
+        y += 16;
+      });
+    }
+
+    // SERVIÇOS
+    if (o.servicos) {
+      sectionTitle('Serviços Designados no Período');
+      checkY(15);
+      doc.setFillColor(...C.verylight);
+      const servLines = doc.splitTextToSize(o.servicos, W - margin * 2 - 6);
+      const servH = Math.max(12, servLines.length * 4 + 6);
+      checkY(servH + 4);
+      doc.rect(margin, y, W - margin * 2, servH, 'F');
+      doc.setDrawColor(...C.lightgray);
+      doc.setLineWidth(0.3);
+      doc.rect(margin, y, W - margin * 2, servH, 'S');
+      doc.setFontSize(8);
+      doc.setFont('helvetica', 'normal');
+      doc.setTextColor(...C.black);
+      doc.text(servLines, margin + 3, y + 4);
+      y += servH + 4;
+    }
+
+    // OBSERVAÇÕES
+    if (o.observacoes) {
+      sectionTitle('Observações da Investigação');
+      checkY(15);
+      doc.setFillColor(...C.verylight);
+      const obsLines = doc.splitTextToSize(o.observacoes, W - margin * 2 - 6);
+      const obsH = Math.max(12, obsLines.length * 4 + 6);
+      checkY(obsH + 4);
+      doc.rect(margin, y, W - margin * 2, obsH, 'F');
+      doc.setDrawColor(...C.lightgray);
+      doc.setLineWidth(0.3);
+      doc.rect(margin, y, W - margin * 2, obsH, 'S');
+      doc.setFontSize(8);
+      doc.setFont('helvetica', 'normal');
+      doc.setTextColor(...C.black);
+      doc.text(obsLines, margin + 3, y + 4);
+      y += obsH + 4;
+    }
+
+    // EVIDÊNCIAS
+    if (o.imagens?.length) {
+      sectionTitle(`Evidências Fotográficas (${o.imagens.length})`);
+      const imgW = (W - margin * 2 - 8) / 3;
+      const imgH = imgW * 0.75;
+      let col = 0;
+      o.imagens.forEach((img, i) => {
+        if (col === 0) checkY(imgH + 8);
+        const ix = margin + col * (imgW + 4);
+        try {
+          doc.setFillColor(...C.verylight);
+          doc.rect(ix, y, imgW, imgH + 6, 'F');
+          doc.setDrawColor(...C.lightgray);
+          doc.setLineWidth(0.3);
+          doc.rect(ix, y, imgW, imgH + 6, 'S');
+          doc.addImage(img.dataUrl, 'JPEG', ix + 1, y + 1, imgW - 2, imgH);
+          doc.setFontSize(6);
+          doc.setFont('helvetica', 'normal');
+          doc.setTextColor(...C.medgray);
+          const nm = img.name.length > 20 ? img.name.substring(0, 17) + '...' : img.name;
+          doc.text(nm, ix + imgW / 2, y + imgH + 4.5, { align: 'center' });
+        } catch (err) {
+          doc.setFontSize(7);
+          doc.setTextColor(...C.medgray);
+          doc.text('[Imagem não disponível]', ix + 4, y + imgH / 2);
+        }
+        col++;
+        if (col >= 3) { col = 0; y += imgH + 8; }
+      });
+      if (col > 0) y += imgH + 8;
+    }
+  });
+
+  // RODAPÉ / ASSINATURA
+  checkY(28);
+  doc.setFillColor(...C.verylight);
+  doc.rect(margin, y, W - margin * 2, 24, 'F');
+  doc.setDrawColor(...C.lightgray);
+  doc.setLineWidth(0.3);
+  doc.rect(margin, y, W - margin * 2, 24, 'S');
+
+  if (obsFinal) {
+    doc.setFontSize(7.5);
+    doc.setFont('helvetica', 'italic');
+    doc.setTextColor(...C.medgray);
+    const finalLines = doc.splitTextToSize(obsFinal, W - margin * 2 - 8);
+    doc.text(finalLines, W / 2, y + 4, { align: 'center' });
+  }
+
+  const sigY = y + 12;
+  const sigW = 50;
+  doc.setDrawColor(...C.medgray);
+  doc.setLineWidth(0.5);
+  doc.line(margin + 10, sigY, margin + 10 + sigW, sigY);
+  doc.setFontSize(6.5);
+  doc.setFont('helvetica', 'normal');
+  doc.setTextColor(...C.medgray);
+  doc.text(responsavel || 'Responsável pela Investigação', margin + 10 + sigW / 2, sigY + 3, { align: 'center' });
+  doc.text('Assinatura / Matrícula', margin + 10 + sigW / 2, sigY + 7, { align: 'center' });
+
+  doc.setFontSize(6);
+  doc.setTextColor(...C.medgray);
+  doc.text(`Emitido em: ${new Date().toLocaleString('pt-BR')}`, W - margin, sigY + 3, { align: 'right' });
+  doc.text('SysTrack — Sistema de Controle de Frotas', W - margin, sigY + 7, { align: 'right' });
+
+  const totalPages = doc.internal.getNumberOfPages();
+  for (let i = 1; i <= totalPages; i++) {
+    doc.setPage(i);
+    doc.setFillColor(...C.accent);
+    doc.rect(0, H - 8, W, 8, 'F');
+    doc.setFontSize(6);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(...C.white);
+    doc.text('DOCUMENTO CONFIDENCIAL — USO INTERNO', margin, H - 3);
+    doc.text(`Página ${i} de ${totalPages}`, W - margin, H - 3, { align: 'right' });
+  }
+
+  const fname = lista.length === 1
+    ? `Laudo_${lista[0].protocolo}_${lista[0].placa}.pdf`
+    : `Laudos_Consolidado_${new Date().toLocaleDateString('pt-BR').replace(/\//g, '-')}.pdf`;
+  doc.save(fname);
+}
+
+// =====================================================
+// UTILITÁRIOS
+// =====================================================
+function formatarData(d) {
+  if (!d) return '—';
+  const [y, m, day] = d.split('-');
+  return `${day}/${m}/${y}`;
+}
+
+function showAlert(containerId, type, msg) {
+  const el = document.getElementById(containerId);
+  if (!el) return;
+  el.innerHTML = `<div class="alert alert-${type}">${msg}</div>`;
+  setTimeout(() => { el.innerHTML = ''; }, 4000);
+}
+
+// =====================================================
+// INICIALIZAÇÃO
+// =====================================================
+window.addEventListener('DOMContentLoaded', () => {
+  atualizarBadges();
+  renderDashboard();
+  // Fechar modal ao clicar fora
+  document.querySelectorAll('.modal-overlay').forEach(overlay => {
+    overlay.addEventListener('click', (e) => {
+      if (e.target === overlay) overlay.classList.remove('open');
+    });
+  });
+});
+</script>
+</body>
+</html>
