@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>  
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -1896,5 +1897,14 @@ window.addEventListener('DOMContentLoaded', () => {
   });
 });
 </script>
+  const SUPABASE_URL = 'https://amphvjyjkenoaniozqrn.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_sQ0cp1AIJWbkZwRz0wQr7Q_k_Y1Nuz1';
+
+const supabase = window.supabase.createClient(
+  SUPABASE_URL,
+  SUPABASE_KEY
+);
+
+console.log('Supabase conectado!');
 </body>
 </html>
