@@ -451,9 +451,6 @@
     /* ===================== DIVIDER ===================== */
     .divider { height: 1px; background: var(--border); margin: 24px 0; }
 
-    /* ===================== GLOW EFFECT ===================== */
-    .glow { box-shadow: 0 0 20px rgba(26,108,255,0.2); }
-
     /* ===================== RESPONSIVE ===================== */
     @media (max-width: 900px) {
       .sidebar { display: none; }
@@ -466,35 +463,6 @@
       .stats-grid { grid-template-columns: 1fr; }
       .form-row.cols-2, .form-row.cols-3, .form-row.cols-4 { grid-template-columns: 1fr; }
     }
-
-    /* ===================== SCAN LINE ANIMATION ===================== */
-    @keyframes scanline { 0% { top: -100%; } 100% { top: 100%; } }
-    .scan-container { position: relative; overflow: hidden; }
-    .scan-container::after {
-      content: ''; position: absolute; left: 0; right: 0; height: 2px;
-      background: linear-gradient(90deg, transparent, rgba(0,200,255,0.3), transparent);
-      animation: scanline 4s linear infinite; pointer-events: none;
-    }
-
-    /* ===================== PULSE ANIMATION ===================== */
-    @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
-    .pulse { animation: pulse 2s ease-in-out infinite; }
-
-    /* ===================== TOOLTIP ===================== */
-    [data-tip] { position: relative; cursor: help; }
-    [data-tip]::after {
-      content: attr(data-tip);
-      position: absolute; bottom: 120%; left: 50%; transform: translateX(-50%);
-      background: var(--panel2); color: var(--text);
-      border: 1px solid var(--border); border-radius: 6px;
-      padding: 6px 10px; font-size: 0.75rem; white-space: nowrap;
-      opacity: 0; pointer-events: none; transition: opacity 0.2s;
-      z-index: 999;
-    }
-    [data-tip]:hover::after { opacity: 1; }
-
-    /* ===================== PRINT HIDDEN ===================== */
-    @media print { .topbar, .sidebar, .btn, .modal-overlay { display: none !important; } }
   </style>
 </head>
 <body>
@@ -568,7 +536,7 @@
     </div>
 
     <div class="grid-2">
-      <div class="card scan-container">
+      <div class="card">
         <div class="card-title">⚡ Últimas Ocorrências</div>
         <div id="dash-ultimas">
           <div class="empty-state">
@@ -731,7 +699,8 @@
             <input type="time" id="p0-chegada" />
           </div>
           <div class="form-group">
-            <label>Tempo Parado</label> <input type="text" id="p0-tempo" placeholder="Ex: 45min" />
+            <label>Tempo Parado</label> 
+            <input type="text" id="p0-tempo" placeholder="Ex: 45min" />
           </div>
           <div class="form-group">
             <label>Horário de Saída da Parada</label>
@@ -743,8 +712,8 @@
           <input type="text" id="p0-endereco" placeholder="Rua, número, bairro, cidade..." />
         </div>
         <div class="form-group">
-          <label>Referência do Local (suposto estabelecimento/local)</label>
-          <input type="text" id="p0-referencia" placeholder="Ex: Bar do João, Residência particular, Posto de gasolina..." />
+          <label>Referência do Local</label>
+          <input type="text" id="p0-referencia" placeholder="Ex: Bar do João, Residência, Posto..." />
         </div>
         
         <div style="border-top: 1px solid var(--border); padding-top: 16px; margin-top: 16px;">
@@ -758,16 +727,16 @@
         <div class="card-title">📝 Observações e Contexto</div>
         <div class="form-group">
           <label>Serviços Passados ao Prestador (no período)</label>
-          <textarea id="f-servicos" placeholder="Descreva os serviços que foram designados ao motorista neste período conforme o sistema..."></textarea>
+          <textarea id="f-servicos" placeholder="Descreva os serviços que foram designados ao motorista..."></textarea>
         </div>
         <div class="form-group">
           <label>Observações da Investigação</label>
-          <textarea id="f-observacoes" placeholder="Descreva os detalhes da investigação, cruzamento de dados do rastreador, inconsistências encontradas..."></textarea>
+          <textarea id="f-observacoes" placeholder="Descreva os detalhes da investigação, cruzamento de dados..."></textarea>
         </div>
         <div class="form-row cols-2">
           <div class="form-group">
             <label>Investigador Responsável</label>
-            <input type="text" id="f-investigador" placeholder="Nome do responsável pela investigação" />
+            <input type="text" id="f-investigador" placeholder="Nome do responsável" />
           </div>
           <div class="form-group">
             <label>Situação da Ocorrência</label>
@@ -786,7 +755,7 @@
         <div class="upload-area" id="upload-area" onclick="document.getElementById('file-input').click()" ondragover="dragOver(event)" ondragleave="dragLeave(event)" ondrop="dropFiles(event)">
           <div class="upload-icon">📁</div>
           <p>Clique para selecionar ou <span>arraste as imagens aqui</span></p>
-          <small>PNG, JPG, JPEG, WEBP — Múltiplos arquivos permitidos (Formatos Base64)</small>
+          <small>PNG, JPG, JPEG, WEBP — Formato Base64</small>
         </div>
         <input type="file" id="file-input" multiple accept="image/*" style="display:none" onchange="handleFiles(event)" />
         <div class="images-preview" id="images-preview"></div>
@@ -813,7 +782,7 @@
         </div>
         <div class="form-group">
           <label>Departamento Responsável</label>
-          <input type="text" id="pdf-depto" value="Departamento de Logística e Controle de Frotas" placeholder="Ex: Departamento de Logística e Controle" />
+          <input type="text" id="pdf-depto" value="Departamento de Logística e Controle de Frotas" placeholder="Ex: Departamento de Logística" />
         </div>
         <div class="form-group">
           <label>Responsável pela Emissão</label>
@@ -852,7 +821,7 @@
       <input type="hidden" id="v-id" />
       <div class="form-group">
         <label>Placa <span class="req">*</span></label>
-        <input type="text" id="v-placa" required placeholder="ABC-1234 ou ABC1D23" style="text-transform:uppercase;" />
+        <input type="text" id="v-placa" required placeholder="ABC-1234" style="text-transform:uppercase;" />
       </div>
       <div class="form-group">
         <label>Modelo / Veículo <span class="req">*</span></label>
@@ -872,36 +841,28 @@
 
 <script>
 // =====================================================
-// PARÂMETROS E CONFIGURAÇÃO DO SUPABASE
+// CONFIGURAÇÃO DO SUPABASE
 // =====================================================
 const SUPABASE_URL = 'https://amphvjyjkenoaniozqrn.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFtcGh2anlqa2Vub2FuaW96cXJuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk0NjE0MTUsImV4cCI6MjA5NTAzNzQxNX0.mlLEdASKtIZKOAiP62rxR1ReI9NH2oRa9uNtvAgdiY4';
 
 let _supabase;
-
-// Arrays globais do app alimentados pelo Supabase
 let viaturas = [];
 let ocorrencias = [];
-let imagensCarregadas = []; // Guarda as strings em Base64 para upload
+let imagensCarregadas = []; 
 let paradaCount = 0;
 
-// =====================================================
-// INICIALIZAÇÃO SEGURA (EVITA ERRO DE SUPABASE UNDEFINED)
-// =====================================================
+// INICIALIZAÇÃO CONTROLADA
 window.addEventListener('DOMContentLoaded', async () => {
   if (typeof supabase !== 'undefined') {
-    // Inicializa o cliente do Supabase com segurança
     _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-    
-    // Carrega dados iniciais vindos direto do Banco de Dados
     await carregarViaturasDoBanco();
     await carregarOcorrenciasDoBanco();
   } else {
-    console.error('Erro crítico: A biblioteca JavaScript do Supabase não foi carregada pelo CDN.');
+    console.error('Erro: Supabase não carregado pelo CDN.');
     showAlert('global-alert-container', 'danger', 'Erro ao inicializar conexão do banco.');
   }
 
-  // Configura fechamento do overlay de modal clicando fora dele
   document.querySelectorAll('.modal-overlay').forEach(overlay => {
     overlay.addEventListener('click', (e) => {
       if (e.target === overlay) overlay.classList.remove('open');
@@ -909,25 +870,17 @@ window.addEventListener('DOMContentLoaded', async () => {
   });
 });
 
-// =====================================================
-// CONEXÃO COM BANCO DE DADOS: OPERAÇÕES DA TABELA VIATURAS
-// =====================================================
+// BANCO DE DADOS: VIATURAS
 async function carregarViaturasDoBanco() {
   try {
-    const { data, error } = await _supabase
-      .from('viaturas')
-      .select('*')
-      .order('placa', { ascending: true });
-
+    const { data, error } = await _supabase.from('viaturas').select('*').order('placa', { ascending: true });
     if (error) throw error;
     viaturas = data || [];
-    
     atualizarBadges();
     renderViaturas();
     atualizarSelectsDePlaca();
   } catch (err) {
-    console.error('Erro ao ler viaturas do Supabase:', err.message);
-    showAlert('global-alert-container', 'danger', 'Erro ao carregar lista de viaturas.');
+    console.error(err.message);
   }
 }
 
@@ -937,74 +890,55 @@ async function salvarViatura(e) {
   const placa = document.getElementById('v-placa').value.trim().toUpperCase();
   const modelo = document.getElementById('v-modelo').value.trim();
   const motorista = document.getElementById('v-motorista').value.trim();
-
   const payload = { placa, modelo, motorista };
 
   try {
     if (id) {
-      // Edição
       const { error } = await _supabase.from('viaturas').update(payload).eq('id', id);
       if (error) throw error;
-      showAlert('global-alert-container', 'success', 'Viatura atualizada com sucesso!');
     } else {
-      // Criação
       const { error } = await _supabase.from('viaturas').insert([payload]);
       if (error) throw error;
-      showAlert('global-alert-container', 'success', 'Viatura cadastrada com sucesso!');
     }
-
     closeModalViatura();
     await carregarViaturasDoBanco();
+    showAlert('global-alert-container', 'success', 'Viatura processada com sucesso!');
   } catch (err) {
-    console.error('Erro ao salvar viatura:', err.message);
-    showAlert('global-alert-container', 'danger', 'Ocorreu um erro ao salvar o veículo.');
+    showAlert('global-alert-container', 'danger', 'Erro ao salvar viatura.');
   }
 }
 
 async function excluirViatura(id) {
-  if (!confirm('Deseja realmente remover esta viatura do sistema?')) return;
+  if (!confirm('Deseja remover esta viatura?')) return;
   try {
     const { error } = await _supabase.from('viaturas').delete().eq('id', id);
     if (error) throw error;
-
-    showAlert('global-alert-container', 'success', 'Viatura removida do sistema.');
     await carregarViaturasDoBanco();
   } catch (err) {
-    console.error('Erro ao remover viatura:', err.message);
-    showAlert('global-alert-container', 'danger', 'Não foi possível deletar a viatura.');
+    showAlert('global-alert-container', 'danger', 'Erro ao deletar viatura.');
   }
 }
 
-// =====================================================
-// CONEXÃO COM BANCO DE DADOS: OPERAÇÕES DA TABELA OCORRÊNCIAS
-// =====================================================
+// BANCO DE DADOS: OCORRÊNCIAS
 async function carregarOcorrenciasDoBanco() {
   try {
-    const { data, error } = await _supabase
-      .from('ocorrencias')
-      .select('*')
-      .order('created_at', { ascending: false });
-
+    const { data, error } = await _supabase.from('ocorrencias').select('*').order('created_at', { ascending: false });
     if (error) throw error;
     ocorrencias = data || [];
-
     atualizarBadges();
     renderDashboard();
     renderOcorrenciasTable();
     atualizarSelectLaudos();
   } catch (err) {
-    console.error('Erro ao buscar ocorrências no banco:', err.message);
-    showAlert('global-alert-container', 'danger', 'Incapaz de atualizar lista de ocorrências.');
+    console.error(err.message);
   }
 }
 
 async function salvarOcorrencia(e) {
   e.preventDefault();
   
-  // Montando objeto de paradas adicionais estruturadas
   const paradasAdicionais = [];
-  const wrappers = document.querySelectorAll('.parada-item');
-  wrappers.forEach(wrap => {
+  document.querySelectorAll('.parada-item').forEach(wrap => {
     const num = wrap.dataset.index;
     paradasAdicionais.push({
       chegada: wrap.querySelector(`#p${num}-chegada`)?.value || '',
@@ -1015,569 +949,305 @@ async function salvarOcorrencia(e) {
     });
   });
 
+  const paradaPrincipal = {
+    chegada: document.getElementById('p0-chegada') ? document.getElementById('p0-chegada').value : '',
+    tempo: document.getElementById('p0-tempo') ? document.getElementById('p0-tempo').value : '',
+    saida: document.getElementById('p0-saida') ? document.getElementById('p0-saida').value : '',
+    endereco: document.getElementById('p0-endereco') ? document.getElementById('p0-endereco').value : '',
+    referencia: document.getElementById('p0-referencia') ? document.getElementById('p0-referencia').value : ''
+  };
+
   const payload = {
     placa: document.getElementById('f-placa').value,
     motorista: document.getElementById('f-motorista').value,
     data: document.getElementById('f-data').value,
     tipo: document.getElementById('f-tipo').value,
-    protocolo: document.getElementById('f-protocolo').value,
+    protocolo: document.getElementById('f-protocolo').value || '',
     hora_saida: document.getElementById('f-hora-saida').value,
     hora_retorno: document.getElementById('f-hora-retorno').value,
-    tempo_total: document.getElementById('f-tempo-total').value,
+    tempo_total: document.getElementById('f-tempo-total').value || '',
     km_rodado: parseFloat(document.getElementById('f-km-rodado').value) || 0,
     km_padrao: parseFloat(document.getElementById('f-km-padrao').value) || 0,
     km_diferenca: parseFloat(document.getElementById('f-km-diferenca').value) || 0,
-    // Parada Principal estruturada como objeto no JSON do banco
-    parada_principal: {
-      chegada: document.getElementById('p0-chegada').value,
-      tempo: document.getElementById('p0-tempo').value,
-      saida: document.getElementById('p0-saida').value,
-      endereco: document.getElementById('p0-endereco').value,
-      referencia: document.getElementById('p0-referencia').value
-    },
+    parada_principal: paradaPrincipal,
     paradas_extras: paradasAdicionais,
-    servicos_designados: document.getElementById('f-servicos').value,
-    observacoes_investigacao: document.getElementById('f-observacoes').value,
-    investigador: document.getElementById('f-investigador').value,
+    servicos_designados: document.getElementById('f-servicos').value || '',
+    observacoes_investigacao: document.getElementById('f-observacoes').value || '',
+    investigador: document.getElementById('f-investigador').value || '',
     status: document.getElementById('f-status').value,
-    imagens: imagensCarregadas // Envia array de strings base64
+    imagens: imagensCarregadas
   };
 
   try {
     const { error } = await _supabase.from('ocorrencias').insert([payload]);
     if (error) throw error;
 
-    showAlert('alert-form', 'success', 'Ocorrência registrada e salva no Supabase com sucesso!');
+    showAlert('alert-form', 'success', 'Ocorrência salva com sucesso!');
     limparFormulario();
     await carregarOcorrenciasDoBanco();
     showPage('ocorrencias');
   } catch (err) {
-    console.error('Erro ao injetar ocorrência:', err.message);
-    showAlert('alert-form', 'danger', 'Ocorreu uma falha ao persistir no banco de dados.');
+    console.error(err.message);
+    showAlert('alert-form', 'danger', 'Falha ao salvar no banco: ' + err.message);
   }
 }
 
 async function deletarOcorrência(id) {
-  if (!confirm('Deseja deletar permanentemente o registro desta investigação?')) return;
+  if (!confirm('Deseja deletar esta ocorrência?')) return;
   try {
     const { error } = await _supabase.from('ocorrencias').delete().eq('id', id);
     if (error) throw error;
-
-    showAlert('global-alert-container', 'success', 'Registro de ocorrência apagado.');
     await carregarOcorrenciasDoBanco();
+    showAlert('global-alert-container', 'success', 'Ocorrência removida.');
   } catch (err) {
-    console.error('Erro deletando ocorrência:', err.message);
-    showAlert('global-alert-container', 'danger', 'Não foi possível apagar a ocorrência.');
+    showAlert('global-alert-container', 'danger', 'Erro ao deletar.');
   }
 }
 
-// =====================================================
-// INTERFACE: ROTAS, NAVEGAÇÃO E UTILS DE COMPONENTES
-// =====================================================
+// NAVEGAÇÃO E UTILS
 function showPage(pageId) {
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-  
-  const targetPage = document.getElementById(`page-${pageId}`);
-  const targetNav = document.getElementById(`nav-${pageId}`);
-  
-  if (targetPage) targetPage.classList.add('active');
-  if (targetNav) targetNav.classList.add('active');
+  document.getElementById(`page-${pageId}`)?.classList.add('active');
+  document.getElementById(`nav-${pageId}`)?.classList.add('active');
 }
 
 function atualizarBadges() {
-  // Atualiza contadores na barra superior e nos cards de estatística
   document.getElementById('badge-viaturas').innerText = viaturas.length;
   document.getElementById('badge-ocorrencias').innerText = ocorrencias.length;
-  
-  const statV = document.getElementById('stat-viaturas');
-  const statO = document.getElementById('stat-ocorrencias');
-  const statS = document.getElementById('stat-saidas');
-  const statD = document.getElementById('stat-desvios');
-
-  if (statV) statV.innerText = viaturas.length;
-  if (statO) statO.innerText = ocorrencias.length;
-
-  if (statS) {
-    const saídasCount = ocorrencias.filter(o => o.tipo && o.tipo.includes('Saída Não Autorizada')).length;
-    statS.innerText = saídasCount;
-  }
-  if (statD) {
-    const desviosCount = ocorrencias.filter(o => o.tipo && o.tipo.includes('Desvio de Rota')).length;
-    statD.innerText = desviosCount;
-  }
+  if(document.getElementById('stat-viaturas')) document.getElementById('stat-viaturas').innerText = viaturas.length;
+  if(document.getElementById('stat-ocorrencias')) document.getElementById('stat-ocorrencias').innerText = ocorrencias.length;
+  if(document.getElementById('stat-saidas')) document.getElementById('stat-saidas').innerText = ocorrencias.filter(o => o.tipo?.includes('Saída')).length;
+  if(document.getElementById('stat-desvios')) document.getElementById('stat-desvios').innerText = ocorrencias.filter(o => o.tipo?.includes('Desvio')).length;
 }
 
 function atualizarSelectsDePlaca() {
-  const selectForm = document.getElementById('f-placa');
-  if (!selectForm) return;
-
-  selectForm.innerHTML = '<option value="">Selecione a viatura...</option>';
-  viaturas.forEach(v => {
-    selectForm.innerHTML += `<option value="${v.placa}">${v.placa} - ${v.modelo}</option>`;
-  });
+  const s = document.getElementById('f-placa');
+  if (!s) return;
+  s.innerHTML = '<option value="">Selecione a viatura...</option>';
+  viaturas.forEach(v => { s.innerHTML += `<option value="${v.placa}">${v.placa} - ${v.modelo}</option>`; });
 }
 
 function preencherMotorista() {
-  const placa = document.getElementById('f-placa').value;
-  const encontrado = viaturas.find(v => v.placa === placa);
-  if (encontrado && encontrado.motorista) {
-    document.getElementById('f-motorista').value = encontrado.motorista;
-  } else {
-    document.getElementById('f-motorista').value = '';
-  }
+  const p = document.getElementById('f-placa').value;
+  const found = viaturas.find(v => v.placa === p);
+  document.getElementById('f-motorista').value = found?.motorista || '';
 }
 
 function calcularDiferencaKM() {
-  const kmRodado = parseFloat(document.getElementById('f-km-rodado').value) || 0;
-  const kmPadrao = parseFloat(document.getElementById('f-km-padrao').value) || 0;
-  const dif = kmRodado - kmPadrao;
+  const prod = parseFloat(document.getElementById('f-km-rodado').value) || 0;
+  const pad = parseFloat(document.getElementById('f-km-padrao').value) || 0;
+  const dif = prod - pad;
   document.getElementById('f-km-diferenca').value = dif > 0 ? dif.toFixed(1) : 0;
 }
 
-// =====================================================
-// RENDERIZAÇÃO DE INTERFACE DINÂMICA
-// =====================================================
+// RENDERIZAÇÃO DASHBOARD & TABELAS
 function renderDashboard() {
-  const dashUltimas = document.getElementById('dash-ultimas');
-  const dashRanking = document.getElementById('dash-ranking');
+  const du = document.getElementById('dash-ultimas');
+  const dr = document.getElementById('dash-ranking');
 
-  // 1. Últimas ocorrências
-  if (dashUltimas) {
+  if (du) {
     if (ocorrencias.length === 0) {
-      dashUltimas.innerHTML = `<div class="empty-state"><div class="empty-icon">🔍</div><p>Nenhuma ocorrência registrada ainda.</p></div>`;
+      du.innerHTML = '<div class="empty-state"><p>Nenhum registro.</p></div>';
     } else {
-      let html = '<div class="timeline">';
+      let h = '<div class="timeline">';
       ocorrencias.slice(0, 4).forEach(o => {
-        html += `
-          <div class="timeline-item">
-            <div class="tl-time">${formatarData(o.data)} às ${o.hora_saida || '—'}</div>
-            <div class="tl-title">${o.tipo} — Placa: <strong>${o.placa}</strong></div>
-            <div class="tl-desc">Condutor: ${o.motorista || 'Não informado'} | Status: <span style="color:var(--warning)">${o.status}</span></div>
-          </div>`;
+        h += `<div class="timeline-item">
+          <div class="tl-time">${formatarData(o.data)} - ${o.hora_saida || ''}</div>
+          <div class="tl-title">${o.tipo} — <strong>${o.placa}</strong></div>
+        </div>`;
       });
-      html += '</div>';
-      dashUltimas.innerHTML = html;
+      du.innerHTML = h + '</div>';
     }
   }
 
-  // 2. Ranking de viaturas com desvios
-  if (dashRanking) {
+  if (dr) {
     if (ocorrencias.length === 0) {
-      dashRanking.innerHTML = `<div class="empty-state"><div class="empty-icon">🚗</div><p>Nenhum veículo com histórico.</p></div>`;
+      dr.innerHTML = '<div class="empty-state"><p>Nenhum veículo.</p></div>';
     } else {
-      const contagem = {};
-      ocorrencias.forEach(o => { contagem[o.placa] = (contagem[o.placa] || 0) + 1; });
-      const ordenado = Object.entries(contagem).sort((a,b) => b[1] - a[1]);
-
-      let html = '<table style="width:100%"><tbody>';
-      ordenado.slice(0, 5).forEach(([placa, qtd]) => {
-        const v = viaturas.find(item => item.placa === placa);
-        html += `
-          <tr>
-            <td><strong style="color:var(--accent3); font-family:monospace; font-size:1.1rem;">${placa}</strong></td>
-            <td>${v ? v.modelo : 'Modelo Não Localizado'}</td>
-            <td style="text-align:right;"><span class="badge-status danger">${qtd} Ocorrência(s)</span></td>
-          </tr>`;
+      const counts = {};
+      ocorrencias.forEach(o => { counts[o.placa] = (counts[o.placa] || 0) + 1; });
+      let h = '<table><tbody>';
+      Object.entries(counts).sort((a,b)=>b[1]-a[1]).slice(0, 5).forEach(([placa, q]) => {
+        h += `<tr><td><strong>${placa}</strong></td><td style="text-align:right;"><span class="badge-status danger">${q}</span></td></tr>`;
       });
-      html += '</tbody></table>';
-      dashRanking.innerHTML = html;
+      dr.innerHTML = h + '</tbody></table>';
     }
   }
 }
 
 function renderViaturas() {
-  const grid = document.getElementById('viatura-grid');
-  if (!grid) return;
-
+  const g = document.getElementById('viatura-grid');
+  if (!g) return;
   if (viaturas.length === 0) {
-    grid.innerHTML = `<div class="empty-state" style="grid-column:1/-1;"><div class="empty-icon">🚗</div><p>Nenhuma viatura cadastrada.</p></div>`;
+    g.innerHTML = '<div class="empty-state" style="grid-column:1/-1;"><p>Nenhuma viatura cadastrada.</p></div>';
     return;
   }
-
-  grid.innerHTML = '';
+  g.innerHTML = '';
   viaturas.forEach(v => {
-    const oCount = ocorrencias.filter(o => o.placa === v.placa).length;
-    grid.innerHTML += `
-      <div class="viatura-card">
-        ${oCount > 0 ? `<div class="ocorrencias-count">${oCount}</div>` : ''}
-        <div class="placa">${v.placa}</div>
-        <div class="modelo">${v.modelo}</div>
-        <div class="motorista">📌 Fixo: ${v.motorista || 'Nenhum associado'}</div>
-        <div class="viatura-actions">
-          <button class="btn btn-outline btn-sm" onclick="editarViatura('${v.id}')">✏️</button>
-          <button class="btn btn-danger btn-sm" onclick="excluirViatura('${v.id}')">🗑️</button>
-        </div>
-      </div>`;
+    const count = ocorrencias.filter(o => o.placa === v.placa).length;
+    g.innerHTML += `<div class="viatura-card">
+      ${count > 0 ? `<div class="ocorrencias-count">${count}</div>` : ''}
+      <div class="placa">${v.placa}</div>
+      <div class="modelo">${v.modelo}</div>
+      <div class="motorista">📌 ${v.motorista || 'Sem motorista'}</div>
+      <div class="viatura-actions">
+        <button class="btn btn-outline btn-sm" onclick="editarViatura('${v.id}')">✏️</button>
+        <button class="btn btn-danger btn-sm" onclick="excluirViatura('${v.id}')">🗑️</button>
+      </div>
+    </div>`;
   });
 }
 
-function renderOcorrenciasTable(filtradas = null) {
-  const tbody = document.getElementById('ocorrencias-tbody');
-  if (!tbody) return;
-
-  const lista = filtradas || ocorrencias;
-
-  if (lista.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="9"><div class="empty-state"><div class="empty-icon">📋</div><p>Nenhum registro encontrado.</p></div></td></tr>`;
+function renderOcorrenciasTable(f = null) {
+  const tb = document.getElementById('ocorrencias-tbody');
+  if (!tb) return;
+  const list = f || ocorrencias;
+  if (list.length === 0) {
+    tb.innerHTML = '<tr><td colspan="9"><div class="empty-state"><p>Nenhum registro encontrado.</p></div></td></tr>';
     return;
   }
-
-  tbody.innerHTML = '';
-  lista.forEach((o, index) => {
-    let badgeClass = 'info';
-    if (o.status === 'Confirmada') badgeClass = 'danger';
-    if (o.status === 'Arquivada') badgeClass = 'success';
-    if (o.status === 'Em Análise') badgeClass = 'warning';
-
-    const countImgs = o.imagens ? o.imagens.length : 0;
-
-    tbody.innerHTML += `
-      <tr>
-        <td><strong>${lista.length - index}</strong></td>
-        <td>${formatarData(o.data)}</td>
-        <td><strong style="color:var(--accent3); font-family:monospace;">${o.placa}</strong></td>
-        <td>${o.motorista || '—'}</td>
-        <td><small>${o.tipo}</small></td>
-        <td>${o.hora_saida || '—'}</td>
-        <td>${o.hora_retorno || '—'}</td>
-        <td>🖼️ ${countImgs}</td>
-        <td>
-          <div class="btn-group">
-            <button class="btn btn-outline btn-sm" onclick="visualizarPDFDireto(${index})">📄 PDF</button>
-            <button class="btn btn-danger btn-sm" onclick="deletarOcorrência('${o.id}')">🗑️</button>
-          </div>
-        </td>
-      </tr>`;
+  tb.innerHTML = '';
+  list.forEach((o, idx) => {
+    tb.innerHTML += `<tr>
+      <td><strong>${list.length - idx}</strong></td>
+      <td>${formatarData(o.data)}</td>
+      <td><strong style="color:var(--accent3);">${o.placa}</strong></td>
+      <td>${o.motorista || '—'}</td>
+      <td><small>${o.tipo}</small></td>
+      <td>${o.hora_saida || '—'}</td>
+      <td>${o.hora_retorno || '—'}</td>
+      <td>🖼️ ${o.imagens ? o.imagens.length : 0}</td>
+      <td>
+        <div class="btn-group">
+          <button class="btn btn-outline btn-sm" onclick="visualizarPDFDireto(${idx})">📄 PDF</button>
+          <button class="btn btn-danger btn-sm" onclick="deletarOcorrência('${o.id}')">🗑️</button>
+        </div>
+      </td>
+    </tr>`;
   });
 }
 
 function filtrarOcorrencias() {
-  const termo = document.getElementById('search-ocorrencias').value.toLowerCase();
-  if (!termo) {
-    renderOcorrenciasTable(ocorrencias);
-    return;
-  }
-  const filtradas = ocorrencias.filter(o => {
-    return (o.placa && o.placa.toLowerCase().includes(termo)) ||
-           (o.motorista && o.motorista.toLowerCase().includes(termo)) ||
-           (o.tipo && o.tipo.toLowerCase().includes(termo)) ||
-           (o.status && o.status.toLowerCase().includes(termo)) ||
-           (o.observacoes_investigacao && o.observacoes_investigacao.toLowerCase().includes(termo));
-  });
-  renderOcorrenciasTable(filtradas);
+  const val = document.getElementById('search-ocorrencias').value.toLowerCase();
+  if (!val) { renderOcorrenciasTable(ocorrencias); return; }
+  renderOcorrenciasTable(ocorrencias.filter(o => o.placa?.toLowerCase().includes(val) || o.motorista?.toLowerCase().includes(val)));
 }
 
-// =====================================================
-// GESTÃO DE PARADAS ADICIONAIS DINÂMICAS
-// =====================================================
+// PARADAS ADICIONAIS
 function adicionarParada() {
   paradaCount++;
-  const container = document.getElementById('paradas-container');
   const div = document.createElement('div');
   div.className = 'parada-item';
   div.id = `parada-item-${paradaCount}`;
   div.dataset.index = paradaCount;
-
   div.innerHTML = `
     <div class="parada-num">PARADA ADICIONAL</div>
-    <button type="button" class="parada-remove" onclick="removerParada(${paradaCount})">Remover Parada</button>
+    <button type="button" class="parada-remove" onclick="removerParada(${paradaCount})">Remover</button>
     <div class="form-row cols-3" style="margin-top:10px;">
-      <div class="form-group">
-        <label>Horário Chegada</label>
-        <input type="time" id="p${paradaCount}-chegada" />
-      </div>
-      <div class="form-group">
-        <label>Tempo Parado</label>
-        <input type="text" id="p${paradaCount}-tempo" placeholder="Ex: 15min" />
-      </div>
-      <div class="form-group">
-        <label>Horário Saída</label>
-        <input type="time" id="p${paradaCount}-saida" />
-      </div>
+      <div class="form-group"><label>Horário Chegada</label><input type="time" id="p${paradaCount}-chegada" /></div>
+      <div class="form-group"><label>Tempo Parado</label><input type="text" id="p${paradaCount}-tempo" /></div>
+      <div class="form-group"><label>Horário Saída</label><input type="time" id="p${paradaCount}-saida" /></div>
     </div>
-    <div class="form-group">
-      <label>Endereço / Localização</label>
-      <input type="text" id="p${paradaCount}-endereco" placeholder="Rua, bairro..." />
-    </div>
-    <div class="form-group">
-      <label>Referência / Estabelecimento</label>
-      <input type="text" id="p${paradaCount}-referencia" placeholder="Ex: Mercado, borracharia..." />
-    </div>`;
-  container.appendChild(div);
+    <div class="form-group"><label>Endereço</label><input type="text" id="p${paradaCount}-endereco" /></div>
+    <div class="form-group"><label>Referência</label><input type="text" id="p${paradaCount}-referencia" /></div>`;
+  document.getElementById('paradas-container').appendChild(div);
 }
+function removerParada(n) { document.getElementById(`parada-item-${n}`)?.remove(); }
 
-function removerParada(num) {
-  const el = document.getElementById(`parada-item-${num}`);
-  if (el) el.remove();
-}
-
-// =====================================================
-// MANIPULAÇÃO DE IMAGENS E CONVERSÃO EM BASE64
-// =====================================================
+// IMAGENS BASE64
 function dragOver(e) { e.preventDefault(); document.getElementById('upload-area').classList.add('drag-over'); }
 function dragLeave(e) { e.preventDefault(); document.getElementById('upload-area').classList.remove('drag-over'); }
-function dropFiles(e) {
-  e.preventDefault();
-  document.getElementById('upload-area').classList.remove('drag-over');
-  if (e.dataTransfer.files.length > 0) processarArquivos(e.dataTransfer.files);
-}
-function handleFiles(e) {
-  if (e.target.files.length > 0) processarArquivos(e.target.files);
-}
-
+function dropFiles(e) { e.preventDefault(); document.getElementById('upload-area').classList.remove('drag-over'); if(e.dataTransfer.files.length) processarArquivos(e.dataTransfer.files); }
+function handleFiles(e) { if(e.target.files.length) processarArquivos(e.target.files); }
 function processarArquivos(files) {
-  const preview = document.getElementById('images-preview');
   Array.from(files).forEach(file => {
-    if (!file.type.startsWith('image/')) return;
-    const reader = new FileReader();
-    reader.onload = function(evt) {
-      const b64String = evt.target.result;
-      imagensCarregadas.push(b64String);
-
+    if(!file.type.startsWith('image/')) return;
+    const r = new FileReader();
+    r.onload = function(evt) {
+      imagensCarregadas.push(evt.target.result);
+      const idx = imagensCarregadas.length - 1;
       const thumb = document.createElement('div');
       thumb.className = 'img-thumb';
-      const idx = imagensCarregadas.length - 1;
       thumb.id = `thumb-${idx}`;
-      thumb.innerHTML = `
-        <img src="${b64String}" />
-        <button type="button" class="remove-img" onclick="removerImagemPreview(${idx})">✕</button>
-        <div class="img-label">Evidência</div>`;
-      preview.appendChild(thumb);
+      thumb.innerHTML = `<img src="${evt.target.result}" /><button type="button" class="remove-img" onclick="removerImagemPreview(${idx})">✕</button>`;
+      document.getElementById('images-preview').appendChild(thumb);
     };
-    reader.readAsDataURL(file);
+    r.readAsDataURL(file);
   });
 }
+function removerImagemPreview(idx) { imagensCarregadas[idx] = null; document.getElementById(`thumb-${idx}`)?.remove(); imagensCarregadas = imagensCarregadas.filter(i => i !== null); }
 
-function removerImagemPreview(idx) {
-  // Remove do array e esconde interface visual
-  imagensCarregadas[idx] = null; 
-  const thumb = document.getElementById(`thumb-${idx}`);
-  if (thumb) thumb.remove();
-  // Filtra nulos no momento de salvar
-  imagensCarregadas = imagensCarregadas.filter(img => img !== null);
-}
-
-// =====================================================
-// GERAÇÃO DE RELATÓRIOS PDF (JSPDF + AUTOTABLE)
-// =====================================================
+// LAUDOS PDF
 function atualizarSelectLaudos() {
-  const select = document.getElementById('pdf-ocorrencia');
-  if (!select) return;
-
-  select.innerHTML = '<option value="">Selecione uma ocorrência...</option>';
-  ocorrencias.forEach((o, index) => {
-    select.innerHTML += `<option value="${index}">Nº ${ocorrencias.length - index} - ${o.placa} (${formatarData(o.data)})</option>`;
-  });
+  const s = document.getElementById('pdf-ocorrencia');
+  if(!s) return;
+  s.innerHTML = '<option value="">Selecione uma ocorrência...</option>';
+  ocorrencias.forEach((o, i) => { s.innerHTML += `<option value="${i}">Nº ${ocorrencias.length - i} - ${o.placa}</option>`; });
 }
-
-function visualizarPDFDireto(index) {
-  const o = ocorrencias[index];
-  if (o) construirPDFLaudo([o]);
-}
-
-function gerarPDFSelecionado() {
-  const idx = document.getElementById('pdf-ocorrencia').value;
-  if (idx === '') { alert('Por favor, selecione uma ocorrência da lista.'); return; }
-  const o = ocorrencias[parseInt(idx)];
-  if (o) construirPDFLaudo([o]);
-}
-
-function gerarPDFConsolidado() {
-  if (ocorrencias.length === 0) { alert('Não há ocorrências registradas para gerar relatório consolidado.'); return; }
-  construirPDFLaudo(ocorrencias);
-}
+function visualizarPDFDireto(i) { const o = ocorrencias[i]; if(o) construirPDFLaudo([o]); }
+function gerarPDFSelecionado() { const i = document.getElementById('pdf-ocorrencia').value; if(i!=='') construirPDFLaudo([ocorrencias[parseInt(i)]]); }
+function gerarPDFConsolidado() { if(ocorrencias.length) construirPDFLaudo(ocorrencias); }
 
 function construirPDFLaudo(lista) {
   const { jsPDF } = window.jspdf;
-  const doc = new jsPDF({ orientation: 'p', unit: 'mm', format: 'a4' });
-
-  const emp = document.getElementById('pdf-empresa').value || 'SysTrack';
-  const depto = document.getElementById('pdf-depto').value || 'Departamento de Segurança';
-  const resp = document.getElementById('pdf-responsavel').value || 'Investigador';
-  const obsFinal = document.getElementById('pdf-obs-final').value || '';
+  const doc = new jsPDF();
+  const emp = document.getElementById('pdf-empresa').value;
+  const depto = document.getElementById('pdf-depto').value;
+  const resp = document.getElementById('pdf-responsavel').value;
 
   lista.forEach((o, idx) => {
     if (idx > 0) doc.addPage();
+    doc.setFillColor(15, 22, 40); doc.rect(0, 0, 210, 32, 'F');
+    doc.setTextColor(255, 255, 255); doc.setFontSize(16); doc.text('LAUDO TÉCNICO DE INVESTIGAÇÃO', 14, 12);
+    doc.setFontSize(9); doc.text(`${emp} | ${depto} | Emissor: ${resp}`, 14, 22);
 
-    // Cabeçalho estilizado estilizado
-    doc.setFillColor(15, 22, 40);
-    doc.rect(0, 0, 210, 35, 'F');
+    doc.setTextColor(0); doc.setFontSize(11); doc.text('1. RESUMO DA INVESTIGAÇÃO', 14, 42);
+    doc.autoTable({
+      startY: 45,
+      body: [
+        ['Placa:', o.placa, 'Data:', formatarData(o.data)],
+        ['Condutor:', o.motorista || '—', 'Protocolo:', o.protocolo || '—'],
+        ['Tipo:', o.tipo, 'Status:', o.status],
+        ['Saída:', o.hora_saida, 'Retorno:', o.hora_retorno],
+        ['KM Rodado:', `${o.km_rodado} KM`, 'KM Padrão:', `${o.km_padrao} KM`],
+        ['KM Excedente:', `${o.km_diferenca} KM`, 'Duração:', o.tempo_total || '—']
+      ],
+      theme: 'grid', styles: { fontSize: 9 }
+    });
 
-    doc.setTextColor(255, 255, 255);
-    doc.setFont('Helvetica', 'bold');
-    doc.setFontSize(18);
-    doc.text('LAUDO TÉCNICO DE INVESTIGAÇÃO', 14, 15);
-    
-    doc.setFont('Helvetica', 'normal');
+    let cy = doc.lastAutoTable.finalY + 8;
+    doc.text('2. MAPEAMENTO DE PARADAS DETECTADAS', 14, cy);
+    const pRows = [];
+    if(o.parada_principal) pRows.push(['PRINCIPAL', o.parada_principal.chegada, o.parada_principal.saida, o.parada_principal.tempo, o.parada_principal.endereco, o.parada_principal.referencia]);
+    if(o.paradas_extras) o.paradas_extras.forEach((p,i)=>pRows.push([`EXTRA ${i+1}`, p.chegada, p.saida, p.tempo, p.endereco, p.referencia]));
+    doc.autoTable({ startY: cy+3, head: [['Tipo', 'Chegada', 'Saída', 'Duração', 'Endereço', 'Referência']], body: pRows, theme: 'striped', styles: { fontSize: 8 } });
+
+    cy = doc.lastAutoTable.finalY + 8;
+    doc.text('3. DETALHAMENTO DA AUDITORIA', 14, cy);
     doc.setFontSize(9);
-    doc.setTextColor(0, 200, 255);
-    doc.text(`Sistema de Auditoria de Frotas — ${emp}`, 14, 22);
-    doc.setTextColor(200, 200, 200);
-    doc.text(`Emissor: ${resp} | Setor: ${depto}`, 14, 28);
-    doc.text(`Data Impressão: ${new Date().toLocaleDateString('pt-BR')}`, 155, 28);
+    doc.text(doc.splitTextToSize(`Serviços: ${o.servicos_designados || 'Nenhum'}`, 180), 14, cy + 5);
+    doc.text(doc.splitTextToSize(`Parecer: ${o.observacoes_investigacao || 'Nenhum'}`, 180), 14, cy + 15);
 
-    // Corpo de Dados principais
-    doc.setFontSize(11);
-    doc.setTextColor(15, 22, 40);
-    doc.text('1. RESUMO DA INVESTIGAÇÃO', 14, 45);
-
-    const dadosResumo = [
-      ['Viatura / Placa:', o.placa || '—', 'Data do Desvio:', formatarData(o.data)],
-      ['Motorista:', o.motorista || '—', 'Protocolo:', o.protocolo || '—'],
-      ['Tipo Inconsistência:', o.tipo || '—', 'Situação Final:', o.status || '—'],
-      ['Horário de Saída:', o.hora_saida || '—', 'Horário de Retorno:', o.hora_retorno || '—'],
-      ['KM Rodado Total:', `${o.km_rodado || 0} KM`, 'KM Rota Padrão:', `${o.km_padrao || 0} KM`],
-      ['KM Excedente:', `${o.km_diferenca || 0} KM`, 'Tempo Estimado Fora:', o.tempo_total || '—']
-    ];
-
-    doc.autoTable({
-      startY: 48,
-      body: dadosResumo,
-      theme: 'grid',
-      styles: { fontSize: 9, cellPadding: 2.5 },
-      columnStyles: {
-        0: { fontStyle: 'bold', fillColor: [240, 242, 245], width: 35 },
-        1: { width: 60 },
-        2: { fontStyle: 'bold', fillColor: [240, 242, 245], width: 35 },
-        3: { width: 60 }
-      }
-    });
-
-    // Paradas executadas
-    let currentY = doc.lastAutoTable.finalY + 10;
-    doc.setFontSize(11);
-    doc.text('2. MAPEAMENTO DE PARADAS DETECTADAS', 14, currentY);
-
-    const rowsParadas = [];
-    // Adiciona a parada principal
-    if (o.parada_principal) {
-      rowsParadas.push([
-        'PRINCIPAL',
-        o.parada_principal.chegada || '—',
-        o.parada_principal.saida || '—',
-        o.parada_principal.tempo || '—',
-        o.parada_principal.endereco || '—',
-        o.parada_principal.referencia || '—'
-      ]);
-    }
-    // Adiciona extras se houverem
-    if (o.paradas_extras && o.paradas_extras.length > 0) {
-      o.paradas_extras.forEach((p, i) => {
-        rowsParadas.push([
-          `EXTRA ${i + 1}`,
-          p.chegada || '—',
-          p.saida || '—',
-          p.tempo || '—',
-          p.endereco || '—',
-          p.referencia || '—'
-        ]);
-      });
-    }
-
-    doc.autoTable({
-      startY: currentY + 3,
-      head: [['Tipo', 'Chegada', 'Saída', 'Duração', 'Endereço / Localidade', 'Referência / Alvo']],
-      body: rowsParadas,
-      theme: 'striped',
-      headStyles: { fillColor: [30, 45, 85] },
-      styles: { fontSize: 8.5, cellPadding: 2.5 }
-    });
-
-    // Detalhes textuais
-    currentY = doc.lastAutoTable.finalY + 10;
-    doc.setFontSize(11);
-    doc.text('3. DETALHAMENTO DA AUDITORIA / EVIDÊNCIAS', 14, currentY);
-
-    doc.setFontSize(9.5);
-    doc.setFont('Helvetica', 'bold');
-    doc.text('Serviços Atribuídos:', 14, currentY + 5);
-    doc.setFont('Helvetica', 'normal');
-    const textServicos = doc.splitTextToSize(o.servicos_designados || 'Nenhum serviço designado registrado no período.', 180);
-    doc.text(textServicos, 14, currentY + 9);
-
-    let nextY = currentY + 11 + (textServicos.length * 4);
-    doc.setFont('Helvetica', 'bold');
-    doc.text('Inconsistências e Parecer Técnico:', 14, nextY);
-    doc.setFont('Helvetica', 'normal');
-    const textObs = doc.splitTextToSize(o.observacoes_investigacao || 'Nenhuma observação técnica adicional descrita.', 180);
-    doc.text(textObs, 14, nextY + 4);
-
-    nextY = nextY + 6 + (textObs.length * 4);
-
-    if (obsFinal) {
-      doc.setFont('Helvetica', 'italic');
-      doc.setFontSize(9);
-      doc.text('Conclusão Adicional do Laudo:', 14, nextY);
-      doc.text(doc.splitTextToSize(obsFinal, 180), 14, nextY + 4);
-    }
-
-    // Assinatura inferior
-    doc.setFont('Helvetica', 'normal');
     doc.line(40, 270, 170, 270);
-    doc.setFontSize(9);
-    doc.text(`Responsável Técnico: ${resp}`, 105, 274, { align: 'center' });
-    doc.text(depto, 105, 278, { align: 'center' });
+    doc.text(`Responsável Técnico: ${resp}`, 105, 275, { align: 'center' });
   });
-
-  const fname = lista.length === 1
-    ? `Laudo_${lista[0].protocolo || 'Investigacao'}_${lista[0].placa}.pdf`
-    : `Laudos_Consolidado_${new Date().toLocaleDateString('pt-BR').replace(/\//g, '-')}.pdf`;
-  doc.save(fname);
+  doc.save(lista.length === 1 ? `Laudo_${lista[0].placa}.pdf` : 'Laudos_Consolidado.pdf');
 }
 
-// =====================================================
-// INTERFACE DE USUÁRIO: GERENCIAMENTO DE MODAL E CAMPOS
-// =====================================================
-function openModalViatura() {
-  document.getElementById('modal-viatura-title').innerText = 'Cadastrar Nova Viatura';
-  document.getElementById('form-viatura').reset();
-  document.getElementById('v-id').value = '';
-  document.getElementById('modal-viatura').classList.add('open');
-}
-
+// INTERFACE CONTROL
+function openModalViatura() { document.getElementById('modal-viatura-title').innerText = 'Cadastrar Nova Viatura'; document.getElementById('form-viatura').reset(); document.getElementById('v-id').value = ''; document.getElementById('modal-viatura').classList.add('open'); }
 function editarViatura(id) {
-  const v = viaturas.find(item => item.id === id);
-  if (!v) return;
-
+  const v = viaturas.find(i => i.id === id); if (!v) return;
   document.getElementById('modal-viatura-title').innerText = 'Editar Registro de Viatura';
-  document.getElementById('v-id').value = v.id;
-  document.getElementById('v-placa').value = v.placa;
-  document.getElementById('v-modelo').value = v.modelo;
-  document.getElementById('v-motorista').value = v.motorista || '';
-
+  document.getElementById('v-id').value = v.id; document.getElementById('v-placa').value = v.placa;
+  document.getElementById('v-modelo').value = v.modelo; document.getElementById('v-motorista').value = v.motorista || '';
   document.getElementById('modal-viatura').classList.add('open');
 }
-
-function closeModalViatura() {
-  document.getElementById('modal-viatura').classList.remove('open');
-}
-
-function limparFormulario() {
-  document.getElementById('form-ocorrencia').reset();
-  document.getElementById('paradas-container').innerHTML = '';
-  document.getElementById('images-preview').innerHTML = '';
-  imagensCarregadas = [];
-  paradaCount = 0;
-}
-
-function formatarData(d) {
-  if (!d) return '—';
-  const partes = d.split('-');
-  if (partes.length !== 3) return d;
-  return `${partes[2]}/${partes[1]}/${partes[0]}`;
-}
-
-function showAlert(containerId, type, msg) {
-  const el = document.getElementById(containerId);
-  if (!el) return;
-  el.innerHTML = `
-    <div class="alert alert-${type}">
-      <span>${type === 'success' ? '✅' : type === 'danger' ? '❌' : 'ℹ️'}</span>
-      <div>${msg}</div>
-    </div>`;
-  setTimeout(() => { el.innerHTML = ''; }, 4500);
-}
+function closeModalViatura() { document.getElementById('modal-viatura').classList.remove('open'); }
+function limparFormulario() { document.getElementById('form-ocorrencia').reset(); document.getElementById('paradas-container').innerHTML = ''; document.getElementById('images-preview').innerHTML = ''; imagensCarregadas = []; paradaCount = 0; }
+function formatarData(d) { if (!d) return '—'; const p = d.split('-'); return p.length === 3 ? `${p[2]}/${p[1]}/${p[0]}` : d; }
+function showAlert(c, t, m) { const e = document.getElementById(c); if (!e) return; e.innerHTML = `<div class="alert alert-${t}"><div>${m}</div></div>`; setTimeout(() => { e.innerHTML = ''; }, 4000); }
 </script>
 </body>
 </html>
